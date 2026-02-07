@@ -28,13 +28,13 @@ function BrainLogo({ isProcessing }: { isProcessing: boolean }) {
     >
       <defs>
         <linearGradient id="ub-brain-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#2563EB"/>
-          <stop offset="45%" stopColor="#4F46E5"/>
-          <stop offset="100%" stopColor="#7C3AED"/>
+          <stop offset="0%" stopColor="#ffffff"/>
+          <stop offset="50%" stopColor="#cccccc"/>
+          <stop offset="100%" stopColor="#999999"/>
         </linearGradient>
         <linearGradient id="ub-node-glow" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#93C5FD"/>
-          <stop offset="100%" stopColor="#C4B5FD"/>
+          <stop offset="0%" stopColor="#ffffff"/>
+          <stop offset="100%" stopColor="#cccccc"/>
         </linearGradient>
       </defs>
       <path d="M 93 20 C 58 20, 16 52, 16 100 C 16 148, 58 180, 93 180 Z" fill="url(#ub-brain-grad)" opacity="0.95"/>
