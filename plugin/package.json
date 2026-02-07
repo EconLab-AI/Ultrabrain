@@ -1,0 +1,12 @@
+{
+  "name": "ultrabrain-plugin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Runtime dependencies for ultrabrain bundled hooks",
+  "type": "module",
+  "dependencies": {},
+  "engines": {
+    "node": ">=18.0.0",
+    "bun": ">=1.0.0"
+  }
+}

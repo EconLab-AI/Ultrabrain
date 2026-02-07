@@ -1,0 +1,18 @@
+{
+  "name": "EconLab-AI",
+  "owner": {
+    "name": "EconLab AI"
+  },
+  "metadata": {
+    "description": "AI tools by EconLab AI",
+    "homepage": "https://github.com/EconLab-AI/Ultrabrain"
+  },
+  "plugins": [
+    {
+      "name": "ultrabrain",
+      "version": "1.0.0",
+      "source": "./plugin",
+      "description": "Semantic memory plugin for Claude Code - LanceDB vector search with context injection"
+    }
+  ]
+}

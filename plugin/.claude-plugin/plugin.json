@@ -1,0 +1,18 @@
+{
+  "name": "ultrabrain",
+  "version": "1.0.0",
+  "description": "Semantic memory plugin for Claude Code - LanceDB-powered vector search with intelligent context injection",
+  "author": {
+    "name": "Giuliano Falco"
+  },
+  "repository": "https://github.com/EconLab-AI/Ultrabrain",
+  "license": "AGPL-3.0",
+  "keywords": [
+    "memory",
+    "context",
+    "persistence",
+    "hooks",
+    "semantic-search",
+    "lancedb"
+  ]
+}

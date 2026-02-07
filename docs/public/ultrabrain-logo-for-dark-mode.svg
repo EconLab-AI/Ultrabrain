@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 140">
+  <defs>
+    <linearGradient id="bg-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="45%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <linearGradient id="glow-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#93C5FD"/>
+      <stop offset="100%" stop-color="#C4B5FD"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Brain Icon (scaled to 120x120, offset 10,10) -->
+  <g transform="translate(10, 10) scale(0.6)">
+    <!-- Left hemisphere -->
+    <path d="M 93 20 C 58 20, 16 52, 16 100 C 16 148, 58 180, 93 180 Z"
+          fill="url(#bg-dark)" opacity="0.95"/>
+    <!-- Right hemisphere -->
+    <path d="M 107 20 C 142 20, 184 52, 184 100 C 184 148, 142 180, 107 180 Z"
+          fill="url(#bg-dark)" opacity="0.88"/>
+    <!-- Sulci left -->
+    <path d="M 30 62 Q 54 73, 87 66" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+    <path d="M 26 100 Q 50 113, 87 104" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+    <path d="M 30 138 Q 54 148, 87 142" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+    <!-- Sulci right -->
+    <path d="M 170 62 Q 146 73, 113 66" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+    <path d="M 174 100 Q 150 113, 113 104" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+    <path d="M 170 138 Q 146 148, 113 142" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+    <!-- Neural connections -->
+    <line x1="54" y1="54" x2="100" y2="100" stroke="white" stroke-width="1.3" opacity="0.22"/>
+    <line x1="146" y1="54" x2="100" y2="100" stroke="white" stroke-width="1.3" opacity="0.22"/>
+    <line x1="46" y1="100" x2="100" y2="100" stroke="white" stroke-width="1.3" opacity="0.22"/>
+    <line x1="154" y1="100" x2="100" y2="100" stroke="white" stroke-width="1.3" opacity="0.22"/>
+    <line x1="54" y1="146" x2="100" y2="100" stroke="white" stroke-width="1.3" opacity="0.18"/>
+    <line x1="146" y1="146" x2="100" y2="100" stroke="white" stroke-width="1.3" opacity="0.18"/>
+    <!-- Neural nodes -->
+    <circle cx="54" cy="54" r="5" fill="url(#glow-dark)" opacity="0.90"/>
+    <circle cx="146" cy="54" r="5" fill="url(#glow-dark)" opacity="0.90"/>
+    <circle cx="46" cy="100" r="4" fill="url(#glow-dark)" opacity="0.80"/>
+    <circle cx="154" cy="100" r="4" fill="url(#glow-dark)" opacity="0.80"/>
+    <circle cx="54" cy="146" r="4" fill="url(#glow-dark)" opacity="0.75"/>
+    <circle cx="146" cy="146" r="4" fill="url(#glow-dark)" opacity="0.75"/>
+    <circle cx="100" cy="100" r="6.5" fill="white" opacity="0.95"/>
+    <circle cx="100" cy="100" r="4" fill="url(#bg-dark)" opacity="0.5"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="148" y="62" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="42" font-weight="200" letter-spacing="6" fill="#F9FAFB">ULTRA</text>
+  <text x="332" y="62" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="42" font-weight="600" letter-spacing="6" fill="#F9FAFB">BRAIN</text>
+
+  <!-- Tagline -->
+  <text x="148" y="90" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="13" font-weight="400" letter-spacing="3" fill="#9CA3AF">PERSISTENT SEMANTIC MEMORY</text>
+
+  <!-- Accent line -->
+  <line x1="148" y1="100" x2="440" y2="100" stroke="url(#bg-dark)" stroke-width="1.5" opacity="0.4"/>
+
+  <!-- Sub-tagline -->
+  <text x="148" y="120" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="12" font-weight="300" letter-spacing="1.5" fill="#6B7280">for Claude Code</text>
+</svg>

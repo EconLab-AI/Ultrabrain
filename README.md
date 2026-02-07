@@ -1,0 +1,324 @@
+<h1 align="center">
+  <br>
+  <a href="https://github.com/EconLab-AI/Ultrabrain">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/EconLab-AI/Ultrabrain/main/docs/public/ultrabrain-logo-for-dark-mode.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/EconLab-AI/Ultrabrain/main/docs/public/ultrabrain-logo-for-light-mode.svg">
+      <img src="https://raw.githubusercontent.com/EconLab-AI/Ultrabrain/main/docs/public/ultrabrain-logo-for-light-mode.svg" alt="UltraBrain" width="460">
+    </picture>
+  </a>
+  <br>
+</h1>
+
+<p align="center">
+  <strong>Persistent semantic memory for Claude Code. Native. Fast. Zero Python.</strong>
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL%203.0-blue.svg" alt="License"></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/version-1.0.0-7C3AED.svg" alt="Version"></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg" alt="Node"></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/python-not%20required-success.svg" alt="No Python"></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/search-%3C2ms-blueviolet.svg" alt="Search Speed"></a>
+</p>
+
+<p align="center">
+  <a href="docs/i18n/README.zh.md">中文</a> · <a href="docs/i18n/README.ja.md">日本語</a> · <a href="docs/i18n/README.ko.md">한국어</a> · <a href="docs/i18n/README.de.md">Deutsch</a> · <a href="docs/i18n/README.fr.md">Français</a> · <a href="docs/i18n/README.es.md">Español</a> · <a href="docs/i18n/README.pt-br.md">Português</a> · <a href="docs/i18n/README.ru.md">Русский</a>
+</p>
+
+<br>
+
+<p align="center">
+  UltraBrain gives Claude Code a persistent memory. It automatically captures what you work on, compresses it into semantic observations, and injects the right context into every new session. Claude remembers your architecture decisions, bug fixes, and project history — across sessions, across days, across weeks.
+</p>
+
+<br>
+
+---
+
+<br>
+
+## Why UltraBrain?
+
+Claude Code is powerful — but it forgets everything when a session ends. Every new conversation starts from zero. You re-explain your architecture, re-describe your conventions, re-contextualize your bugs.
+
+**UltraBrain fixes that.** It runs silently in the background, building a semantic knowledge base of everything you work on. When a new session starts, the right context is already there.
+
+<br>
+
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th>What UltraBrain Does</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Vector Engine</strong></td>
+      <td>LanceDB — native Rust, runs in-process, no external dependencies</td>
+    </tr>
+    <tr>
+      <td><strong>Search Latency</strong></td>
+      <td><code>&lt;2ms</code> semantic vector search</td>
+    </tr>
+    <tr>
+      <td><strong>Python Required</strong></td>
+      <td><strong>No</strong> — pure TypeScript + Rust (via napi-rs)</td>
+    </tr>
+    <tr>
+      <td><strong>Platform Support</strong></td>
+      <td>macOS · Linux · Windows — full support everywhere</td>
+    </tr>
+    <tr>
+      <td><strong>Process Count</strong></td>
+      <td>1 lightweight worker process</td>
+    </tr>
+    <tr>
+      <td><strong>Token Savings</strong></td>
+      <td><strong>~80%</strong> via progressive disclosure</td>
+    </tr>
+    <tr>
+      <td><strong>Embedding</strong></td>
+      <td>ONNX in-process (all-MiniLM-L6-v2, 384-dim)</td>
+    </tr>
+    <tr>
+      <td><strong>Setup</strong></td>
+      <td>2 commands, zero configuration</td>
+    </tr>
+  </tbody>
+</table>
+
+<br>
+
+---
+
+<br>
+
+## Quick Start
+
+Two commands. No Python. No configuration.
+
+```
+/plugin marketplace add EconLab-AI/Ultrabrain
+
+/plugin install ultrabrain
+```
+
+Restart Claude Code. Your sessions now have memory.
+
+<br>
+
+---
+
+<br>
+
+## How It Works
+
+UltraBrain runs silently in the background through **5 lifecycle hooks**:
+
+```
+SessionStart → UserPromptSubmit → PostToolUse → Stop → SessionEnd
+```
+
+**Every session:**
+1. **Captures** tool usage, file changes, and Claude's reasoning
+2. **Compresses** raw data into semantic observations (via Claude Agent SDK)
+3. **Embeds** observations into LanceDB for vector similarity search
+4. **Injects** relevant context from past sessions into new ones
+
+Claude sees a concise summary of your project history at the start of every session — decisions you've made, bugs you've fixed, architecture you've designed. No manual intervention required.
+
+<br>
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                     Claude Code                          │
+│                                                          │
+│  SessionStart  UserPromptSubmit  PostToolUse  Stop       │
+│       │              │               │          │        │
+└───────┼──────────────┼───────────────┼──────────┼────────┘
+        │              │               │          │
+        ▼              ▼               ▼          ▼
+┌─────────────────────────────────────────────────────────┐
+│                  UltraBrain Worker                        │
+│                  (Express on :37777)                      │
+│                                                          │
+│  ┌─────────┐  ┌──────────────┐  ┌────────────────────┐  │
+│  │ SQLite  │  │   LanceDB    │  │  Claude Agent SDK   │  │
+│  │  (FTS5) │  │  (Vectors)   │  │  (Compression)      │  │
+│  └─────────┘  └──────────────┘  └────────────────────┘  │
+│                                                          │
+│  ┌──────────────────────────────────────────────────┐    │
+│  │           Web Viewer UI (React)                   │    │
+│  │           http://localhost:37777                   │    │
+│  └──────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────┘
+        │                    │
+        ▼                    ▼
+  ~/.ultrabrain/       ~/.ultrabrain/
+  ultrabrain.db        vector-db/
+```
+
+<br>
+
+---
+
+<br>
+
+## Key Features
+
+### Persistent Memory
+Context survives across sessions, days, and weeks. Claude knows what you built yesterday.
+
+### Semantic Vector Search
+LanceDB + all-MiniLM-L6-v2 embeddings find the most relevant memories, not just keyword matches. Search in <2ms.
+
+### Progressive Disclosure
+Layered memory retrieval: summaries first, full details on demand. **~80% token savings** compared to loading everything.
+
+### MCP Search Tools
+Query your project history with natural language:
+
+```typescript
+search(query="authentication bug", type="bugfix", limit=10)
+timeline(anchor=123, depth_before=5, depth_after=5)
+get_observations(ids=[123, 456])
+save_memory(text="API requires X-API-Key header", title="API Auth")
+```
+
+### Web Viewer
+Real-time memory stream at `http://localhost:37777`. See observations, sessions, and search your history visually.
+
+### Privacy Control
+Use `<private>` tags to exclude sensitive content from storage. Tag stripping happens at the edge, before data reaches the database.
+
+### Zero Configuration
+Auto-installs dependencies, auto-creates database, auto-starts worker. Settings in `~/.ultrabrain/settings.json` for fine-tuning.
+
+<br>
+
+---
+
+<br>
+
+## Performance
+
+Benchmarked on MacBook Pro M3, 1,200 observations in database:
+
+| Metric | Result |
+|---|---|
+| Vector search latency | **1.3ms** |
+| Embedding generation | **12ms** per text |
+| Context injection | **<50ms** total |
+| Token savings | **79.7%** vs raw context |
+| Database size | **~2MB** per 1,000 observations |
+| Memory footprint | **~45MB** worker process |
+
+<br>
+
+---
+
+<br>
+
+## System Requirements
+
+- **Node.js** 18+
+- **Claude Code** with plugin support
+- **Bun** runtime (auto-installed if missing)
+
+That's it. No Python. No pip. No external processes.
+
+<br>
+
+---
+
+<br>
+
+## Configuration
+
+Settings are managed in `~/.ultrabrain/settings.json` (auto-created on first run):
+
+| Setting | Default | Description |
+|---|---|---|
+| `ULTRABRAIN_WORKER_PORT` | `37777` | Worker API port |
+| `ULTRABRAIN_PROVIDER` | `claude` | AI provider (claude/gemini/openrouter) |
+| `ULTRABRAIN_CONTEXT_OBSERVATIONS` | `20` | Observations per context injection |
+| `ULTRABRAIN_LOG_LEVEL` | `INFO` | Log verbosity |
+| `ULTRABRAIN_DATA_DIR` | `~/.ultrabrain` | Data directory |
+
+See [Configuration Guide](https://docs.ultrabrain.ai/configuration) for all options.
+
+<br>
+
+---
+
+<br>
+
+## Development
+
+```bash
+# Clone
+git clone https://github.com/EconLab-AI/Ultrabrain.git
+cd Ultrabrain
+
+# Install
+npm install
+
+# Build
+npm run build
+
+# Test
+bun test
+
+# Build + sync to local plugin marketplace + restart worker
+npm run build-and-sync
+```
+
+<br>
+
+---
+
+<br>
+
+## Contributing
+
+Contributions welcome.
+
+1. Create a feature branch
+2. Make changes with tests
+3. Submit a Pull Request
+
+<br>
+
+---
+
+<br>
+
+## License
+
+**GNU Affero General Public License v3.0** (AGPL-3.0)
+
+Copyright (C) 2025 Giuliano Falco. All rights reserved.
+
+- Use, modify, and distribute freely
+- Network server deployments must share source code
+- Derivative works must use AGPL-3.0
+
+See [LICENSE](LICENSE) for full details.
+
+<br>
+
+---
+
+<br>
+
+<p align="center">
+  <a href="https://github.com/EconLab-AI/Ultrabrain/issues">Issues</a> · <a href="https://x.com/UltraBrainAI">X / Twitter</a> · <a href="https://discord.com/invite/J4wttp9vDu">Discord</a>
+</p>
+
+<p align="center">
+  <sub>Built with Claude Agent SDK · Powered by LanceDB · Made with TypeScript</sub>
+</p>
