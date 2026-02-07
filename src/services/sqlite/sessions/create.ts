@@ -21,7 +21,8 @@ export function createSDKSession(
   db: Database,
   contentSessionId: string,
   project: string,
-  userPrompt: string
+  userPrompt: string,
+  source: string = 'claude-code'
 ): number {
   const now = new Date();
   const nowEpoch = now.getTime();
@@ -48,9 +49,9 @@ export function createSDKSession(
   // must NEVER equal contentSessionId - that would inject memory messages into the user's transcript!
   db.prepare(`
     INSERT INTO sdk_sessions
-    (content_session_id, memory_session_id, project, user_prompt, started_at, started_at_epoch, status)
-    VALUES (?, NULL, ?, ?, ?, ?, 'active')
-  `).run(contentSessionId, project, userPrompt, now.toISOString(), nowEpoch);
+    (content_session_id, memory_session_id, project, user_prompt, started_at, started_at_epoch, status, source)
+    VALUES (?, NULL, ?, ?, ?, ?, 'active', ?)
+  `).run(contentSessionId, project, userPrompt, now.toISOString(), nowEpoch, source);
 
   // Return new ID
   const row = db.prepare('SELECT id FROM sdk_sessions WHERE content_session_id = ?')

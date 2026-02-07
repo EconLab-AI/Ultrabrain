@@ -26,6 +26,7 @@ export function importSdkSession(
     completed_at: string | null;
     completed_at_epoch: number | null;
     status: string;
+    source?: string;
   }
 ): ImportResult {
   // Check if session already exists
@@ -37,11 +38,13 @@ export function importSdkSession(
     return { imported: false, id: existing.id };
   }
 
+  const source = session.source || 'claude-code';
+
   const stmt = db.prepare(`
     INSERT INTO sdk_sessions (
       content_session_id, memory_session_id, project, user_prompt,
-      started_at, started_at_epoch, completed_at, completed_at_epoch, status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      started_at, started_at_epoch, completed_at, completed_at_epoch, status, source
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const result = stmt.run(
@@ -53,7 +56,8 @@ export function importSdkSession(
     session.started_at_epoch,
     session.completed_at,
     session.completed_at_epoch,
-    session.status
+    session.status,
+    source
   );
 
   return { imported: true, id: result.lastInsertRowid as number };

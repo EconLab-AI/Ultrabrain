@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Header } from './components/Header';
 import { Feed } from './components/Feed';
+import { LeftSidebar, ViewType } from './components/LeftSidebar';
+import { ProjectsView } from './components/ProjectsView';
+import { KanbanView } from './components/KanbanView';
+import { ClaudeDesktopView } from './components/ClaudeDesktopView';
 import { ContextSettingsModal } from './components/ContextSettingsModal';
 import { LogsDrawer } from './components/LogsModal';
 import { useSSE } from './hooks/useSSE';
@@ -9,6 +13,7 @@ import { useStats } from './hooks/useStats';
 import { usePagination } from './hooks/usePagination';
 import { useTheme } from './hooks/useTheme';
 import { Observation, Summary, UserPrompt } from './types';
+
 import { mergeAndDeduplicateByProject } from './utils/data';
 
 export function App() {
@@ -19,20 +24,27 @@ export function App() {
   const [paginatedSummaries, setPaginatedSummaries] = useState<Summary[]>([]);
   const [paginatedPrompts, setPaginatedPrompts] = useState<UserPrompt[]>([]);
 
+  // Sidebar + view state
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    try {
+      const stored = localStorage.getItem('ub-sidebar-open');
+      return stored ? JSON.parse(stored) : false;
+    } catch { return false; }
+  });
+  const [currentView, setCurrentView] = useState<ViewType>('feed');
+
   const { observations, summaries, prompts, projects, isProcessing, queueDepth, isConnected } = useSSE();
   const { settings, saveSettings, isSaving, saveStatus } = useSettings();
   const { stats, refreshStats } = useStats();
-  const { preference, resolvedTheme, setThemePreference } = useTheme();
+  useTheme();
   const pagination = usePagination(currentFilter);
 
   // When filtering by project: ONLY use paginated data (API-filtered)
   // When showing all projects: merge SSE live data with paginated data
   const allObservations = useMemo(() => {
     if (currentFilter) {
-      // Project filter active: API handles filtering, ignore SSE items
       return paginatedObservations;
     }
-    // No filter: merge SSE + paginated, deduplicate by ID
     return mergeAndDeduplicateByProject(observations, paginatedObservations);
   }, [observations, paginatedObservations, currentFilter]);
 
@@ -92,28 +104,67 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentFilter]);
 
+  // Handle project card click: set filter and switch to feed
+  const handleSelectProject = useCallback((project: string) => {
+    setCurrentFilter(project);
+    setCurrentView('feed');
+  }, []);
+
+  // Handle view change from sidebar
+  const handleViewChange = useCallback((view: ViewType) => {
+    setCurrentView(view);
+  }, []);
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen((prev: boolean) => !prev);
+  }, []);
+
+  // Render current view content
+  const renderContent = () => {
+    switch (currentView) {
+      case 'projects':
+        return <ProjectsView onSelectProject={handleSelectProject} />;
+      case 'kanban':
+        return <KanbanView currentProject={currentFilter} projects={projects} />;
+      case 'claude-desktop':
+        return <ClaudeDesktopView projects={projects} />;
+      case 'feed':
+      default:
+        return (
+          <Feed
+            observations={allObservations}
+            summaries={allSummaries}
+            prompts={allPrompts}
+            onLoadMore={handleLoadMore}
+            isLoading={pagination.observations.isLoading || pagination.summaries.isLoading || pagination.prompts.isLoading}
+            hasMore={pagination.observations.hasMore || pagination.summaries.hasMore || pagination.prompts.hasMore}
+            projects={projects}
+            currentFilter={currentFilter}
+            onFilterChange={setCurrentFilter}
+          />
+        );
+    }
+  };
+
   return (
     <>
-      <Header
-        isConnected={isConnected}
-        projects={projects}
-        currentFilter={currentFilter}
-        onFilterChange={setCurrentFilter}
-        isProcessing={isProcessing}
-        queueDepth={queueDepth}
-        themePreference={preference}
-        onThemeChange={setThemePreference}
-        onContextPreviewToggle={toggleContextPreview}
+      <LeftSidebar
+        isOpen={sidebarOpen}
+        onToggle={toggleSidebar}
+        currentView={currentView}
+        onViewChange={handleViewChange}
       />
 
-      <Feed
-        observations={allObservations}
-        summaries={allSummaries}
-        prompts={allPrompts}
-        onLoadMore={handleLoadMore}
-        isLoading={pagination.observations.isLoading || pagination.summaries.isLoading || pagination.prompts.isLoading}
-        hasMore={pagination.observations.hasMore || pagination.summaries.hasMore || pagination.prompts.hasMore}
-      />
+      <div className={`main-content-wrapper ${sidebarOpen ? 'sidebar-open' : ''}`}>
+        <Header
+          isConnected={isConnected}
+          isProcessing={isProcessing}
+          queueDepth={queueDepth}
+          onContextPreviewToggle={toggleContextPreview}
+        />
+
+        {renderContent()}
+      </div>
 
       <ContextSettingsModal
         isOpen={contextPreviewOpen}
@@ -127,12 +178,11 @@ export function App() {
       <button
         className="console-toggle-btn"
         onClick={toggleLogsModal}
-        title="Toggle Console"
+        title="Toggle Terminal"
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="4 17 10 11 4 5"></polyline>
-          <line x1="12" y1="19" x2="20" y2="19"></line>
-        </svg>
+        <span className="terminal-prefix">&gt;_</span>
+        <span>Terminal</span>
+        <span className="terminal-cursor"></span>
       </button>
 
       <LogsDrawer

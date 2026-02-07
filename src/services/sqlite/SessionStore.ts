@@ -48,6 +48,7 @@ export class SessionStore {
     this.repairSessionIdColumnRename();
     this.addFailedAtEpochColumn();
     this.addOnUpdateCascadeToForeignKeys();
+    this.addSessionSourceColumn();
   }
 
   /**
@@ -85,7 +86,8 @@ export class SessionStore {
           started_at_epoch INTEGER NOT NULL,
           completed_at TEXT,
           completed_at_epoch INTEGER,
-          status TEXT CHECK(status IN ('active', 'completed', 'failed')) NOT NULL DEFAULT 'active'
+          status TEXT CHECK(status IN ('active', 'completed', 'failed')) NOT NULL DEFAULT 'active',
+          source TEXT NOT NULL DEFAULT 'claude-code'
         );
 
         CREATE INDEX IF NOT EXISTS idx_sdk_sessions_claude_id ON sdk_sessions(content_session_id);
@@ -93,6 +95,7 @@ export class SessionStore {
         CREATE INDEX IF NOT EXISTS idx_sdk_sessions_project ON sdk_sessions(project);
         CREATE INDEX IF NOT EXISTS idx_sdk_sessions_status ON sdk_sessions(status);
         CREATE INDEX IF NOT EXISTS idx_sdk_sessions_started ON sdk_sessions(started_at_epoch DESC);
+        CREATE INDEX IF NOT EXISTS idx_sdk_sessions_source ON sdk_sessions(source);
 
         CREATE TABLE IF NOT EXISTS observations (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -826,6 +829,29 @@ export class SessionStore {
   }
 
   /**
+   * Migration: Add source column to sdk_sessions to distinguish between Claude Code and Claude Desktop sessions
+   */
+  private addSessionSourceColumn(): void {
+    const applied = this.db.prepare('SELECT version FROM schema_versions WHERE version = ?').get(22) as SchemaVersion | undefined;
+    if (applied) return;
+
+    try {
+      const columns = this.db.prepare("PRAGMA table_info(sdk_sessions)").all() as TableColumnInfo[];
+      const hasSource = columns.some(c => c.name === 'source');
+
+      if (!hasSource) {
+        this.db.run("ALTER TABLE sdk_sessions ADD COLUMN source TEXT NOT NULL DEFAULT 'claude-code'");
+        this.db.run("CREATE INDEX IF NOT EXISTS idx_sdk_sessions_source ON sdk_sessions(source)");
+        logger.info('DB', 'Added source column to sdk_sessions');
+      }
+
+      this.db.prepare('INSERT OR IGNORE INTO schema_versions (version, applied_at) VALUES (?, ?)').run(22, new Date().toISOString());
+    } catch (error) {
+      logger.error('DB', 'Failed to add source column to sdk_sessions', {}, error as Error);
+    }
+  }
+
+  /**
    * Update the memory session ID for a session
    * Called by SDKAgent when it captures the session ID from the first SDK message
    * Also used to RESET to null on stale resume failures (worker-service.ts)
@@ -1366,7 +1392,7 @@ export class SessionStore {
    * Pure get-or-create: never modifies memory_session_id.
    * Multi-terminal isolation is handled by ON UPDATE CASCADE at the schema level.
    */
-  createSDKSession(contentSessionId: string, project: string, userPrompt: string): number {
+  createSDKSession(contentSessionId: string, project: string, userPrompt: string, source: string = 'claude-code'): number {
     const now = new Date();
     const nowEpoch = now.getTime();
 
@@ -1392,9 +1418,9 @@ export class SessionStore {
     // must NEVER equal contentSessionId - that would inject memory messages into the user's transcript!
     this.db.prepare(`
       INSERT INTO sdk_sessions
-      (content_session_id, memory_session_id, project, user_prompt, started_at, started_at_epoch, status)
-      VALUES (?, NULL, ?, ?, ?, ?, 'active')
-    `).run(contentSessionId, project, userPrompt, now.toISOString(), nowEpoch);
+      (content_session_id, memory_session_id, project, user_prompt, started_at, started_at_epoch, status, source)
+      VALUES (?, NULL, ?, ?, ?, ?, 'active', ?)
+    `).run(contentSessionId, project, userPrompt, now.toISOString(), nowEpoch, source);
 
     // Return new ID
     const row = this.db.prepare('SELECT id FROM sdk_sessions WHERE content_session_id = ?')
@@ -2147,8 +2173,8 @@ export class SessionStore {
     // Create new manual session
     const now = new Date();
     this.db.prepare(`
-      INSERT INTO sdk_sessions (memory_session_id, content_session_id, project, started_at, started_at_epoch, status)
-      VALUES (?, ?, ?, ?, ?, 'active')
+      INSERT INTO sdk_sessions (memory_session_id, content_session_id, project, started_at, started_at_epoch, status, source)
+      VALUES (?, ?, ?, ?, ?, 'active', 'manual')
     `).run(memorySessionId, contentSessionId, project, now.toISOString(), now.getTime());
 
     logger.info('SESSION', 'Created manual session', { memorySessionId, project });

@@ -68,6 +68,23 @@ async function buildViewer() {
       );
     }
 
+    // Copy image assets (logos, etc.)
+    const imgAssetsDir = path.join(rootDir, 'src/ui/assets');
+    const outputAssetsDir = path.join(rootDir, 'plugin/ui/assets');
+    if (fs.existsSync(imgAssetsDir)) {
+      fs.mkdirSync(outputAssetsDir, { recursive: true });
+      const imgFiles = fs.readdirSync(imgAssetsDir).filter(file => /\.(png|jpg|jpeg|svg|webp|ico)$/i.test(file));
+      for (const file of imgFiles) {
+        fs.copyFileSync(
+          path.join(imgAssetsDir, file),
+          path.join(outputAssetsDir, file)
+        );
+      }
+      if (imgFiles.length > 0) {
+        console.log(`  - plugin/ui/assets/* (${imgFiles.length} image files)`);
+      }
+    }
+
     console.log('✓ React viewer built successfully');
     console.log('  - plugin/ui/viewer-bundle.js');
     console.log('  - plugin/ui/viewer.html (from viewer-template.html)');

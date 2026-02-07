@@ -40,6 +40,12 @@
 
 <br>
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/EconLab-AI/Ultrabrain/main/docs/public/screenshot-viewer.png" alt="UltraBrain Viewer — 3D Brain, Dark Theme, Real-time Memory Feed" width="800">
+</p>
+
+<br>
+
 ---
 
 <br>
@@ -50,7 +56,7 @@ Claude is powerful — but it forgets everything when a session ends. Every new 
 
 **UltraBrain fixes that.** It runs silently in the background, building a semantic knowledge base of everything you work on. When a new session starts, the right context is already there.
 
-And with the **Claude Desktop Bridge**, you can brainstorm and plan in Claude Desktop, save that knowledge to UltraBrain, and have it automatically available in your next Claude Code session. No copy-pasting. No context loss.
+And with the **Claude Desktop Integration**, you can brainstorm and plan in Claude Desktop, save that knowledge to UltraBrain, and have it automatically available in your next Claude Code session. No copy-pasting. No context loss.
 
 <br>
 
@@ -71,8 +77,16 @@ And with the **Claude Desktop Bridge**, you can brainstorm and plan in Claude De
       <td><code>&lt;2ms</code> semantic vector search</td>
     </tr>
     <tr>
-      <td><strong>Desktop Bridge</strong></td>
-      <td>Brainstorm in Claude Desktop, implement in Claude Code — shared knowledge base</td>
+      <td><strong>Desktop Integration</strong></td>
+      <td>MCP bridge + local session import from Claude Desktop's agent mode</td>
+    </tr>
+    <tr>
+      <td><strong>3D Brain Viewer</strong></td>
+      <td>Animated Three.js brain visualization with real-time memory feed</td>
+    </tr>
+    <tr>
+      <td><strong>Kanban Board</strong></td>
+      <td>Built-in project task management with drag-and-drop</td>
     </tr>
     <tr>
       <td><strong>Python Required</strong></td>
@@ -93,6 +107,10 @@ And with the **Claude Desktop Bridge**, you can brainstorm and plan in Claude De
     <tr>
       <td><strong>Project Isolation</strong></td>
       <td>Each project gets its own knowledge silo — no cross-contamination</td>
+    </tr>
+    <tr>
+      <td><strong>Dark Theme</strong></td>
+      <td>Dark-only UI with monospace typography and ambient glow effects</td>
     </tr>
     <tr>
       <td><strong>Setup</strong></td>
@@ -121,7 +139,11 @@ Restart Claude Code. Your sessions now have memory.
 
 <br>
 
-### Claude Desktop Bridge (optional)
+### Claude Desktop Integration
+
+UltraBrain integrates with Claude Desktop in two ways:
+
+#### 1. MCP Bridge (Real-time Knowledge Sharing)
 
 The MCP server is **included with the plugin** — no separate installation needed. To connect Claude Desktop to your UltraBrain knowledge base, add this to your Claude Desktop config:
 
@@ -157,6 +179,20 @@ Restart Claude Desktop. You now have access to these tools:
 1. Brainstorm architecture in Claude Desktop
 2. `save_memory(text="We decided to use event sourcing for the audit trail...", project="my-app")`
 3. Open Claude Code in `my-app` — the decision is already in context
+
+#### 2. Local Session Import (Historical Sessions)
+
+UltraBrain can import your entire Claude Desktop **Local Agent Mode** conversation history — all sessions, all user prompts — directly into the memory database.
+
+```bash
+# Check if sessions are available
+curl http://localhost:37777/api/claude-desktop/import/check
+
+# Import all sessions (idempotent — safe to re-run)
+curl -X POST http://localhost:37777/api/claude-desktop/import
+```
+
+Imported sessions appear in the viewer under the **Claude Desktop** tab with full metadata: project names, timestamps, models, and extracted user prompts.
 
 <br>
 
@@ -203,13 +239,19 @@ Claude sees a concise summary of your project history at the start of every sess
 │  └─────────┘  └──────────────┘  └────────────────────┘  │
 │                                                          │
 │  ┌──────────────────────────────────────────────────┐    │
-│  │           Web Viewer UI (React)                   │    │
-│  │           http://localhost:37777                   │    │
+│  │      Web Viewer UI (React + Three.js)             │    │
+│  │      http://localhost:37777                       │    │
+│  │      3D Brain · Memory Feed · Kanban Board        │    │
 │  └──────────────────────────────────────────────────┘    │
 │                                                          │
 │  ┌──────────────────────────────────────────────────┐    │
 │  │       MCP Server (stdio JSON-RPC)                 │    │
 │  │       Claude Desktop Bridge                       │    │
+│  └──────────────────────────────────────────────────┘    │
+│                                                          │
+│  ┌──────────────────────────────────────────────────┐    │
+│  │   Claude Desktop Local Session Importer           │    │
+│  │   ~/Library/.../local-agent-mode-sessions → DB    │    │
 │  └──────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────┘
         │                    │
@@ -229,8 +271,14 @@ Claude sees a concise summary of your project history at the start of every sess
 ### Persistent Memory
 Context survives across sessions, days, and weeks. Claude knows what you built yesterday.
 
-### Claude Desktop Bridge
-Brainstorm and plan in Claude Desktop, save decisions with `save_memory()`, and have them automatically available in Claude Code. The MCP server ships with the plugin — no separate installation.
+### Claude Desktop Integration
+Two-way integration: **MCP Bridge** for real-time knowledge sharing between Claude Desktop and Claude Code, plus **Local Session Import** to bring your entire Claude Desktop conversation history into UltraBrain. All sessions, prompts, and metadata are preserved.
+
+### 3D Brain Visualization
+An animated Three.js brain rotates in the viewer header, with neural nodes and connections that pulse with ambient light. A visual representation of your growing knowledge base.
+
+### Kanban Board
+Built-in task management with drag-and-drop between columns (Todo, In Progress, Done). Auto-categorizes tasks by type (bug, feature, UI, devops, etc.) with color-coded badges.
 
 ### Project Isolation
 Every project gets its own knowledge silo. Observations are tagged with the project name and all queries support project filtering. No cross-contamination between codebases.
@@ -253,7 +301,7 @@ list_projects()
 ```
 
 ### Web Viewer
-Real-time memory stream at `http://localhost:37777`. See observations, sessions, and search your history visually.
+Real-time memory stream at `http://localhost:37777`. See observations, sessions, and search your history visually — all in a dark-only theme with monospace typography.
 
 ### Privacy Control
 Use `<private>` tags to exclude sensitive content from storage. Tag stripping happens at the edge, before data reaches the database.
@@ -363,7 +411,7 @@ Contributions welcome. Please follow existing code patterns and include tests.
 
 **GNU Affero General Public License v3.0** (AGPL-3.0)
 
-Copyright (C) 2025 [EconLab AI](https://www.econlab-ai.com). All rights reserved.
+Copyright (C) 2026 [EconLab AI](https://www.econlab-ai.com). All rights reserved.
 
 - Use, modify, and distribute freely
 - Network server deployments must share source code

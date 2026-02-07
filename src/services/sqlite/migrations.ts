@@ -500,6 +500,38 @@ export const migration007: Migration = {
 
 
 /**
+ * Migration 008 - Add tasks table for Kanban board
+ */
+export const migration008: Migration = {
+  version: 8,
+  up: (db: Database) => {
+    db.run(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        status TEXT NOT NULL DEFAULT 'todo',
+        priority TEXT DEFAULT 'medium',
+        category TEXT,
+        created_at_epoch INTEGER NOT NULL,
+        updated_at_epoch INTEGER NOT NULL,
+        completed_at_epoch INTEGER
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_tasks_project ON tasks(project);
+      CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(project, status);
+    `);
+
+    console.log('✅ Created tasks table for Kanban board');
+  },
+
+  down: (db: Database) => {
+    db.run(`DROP TABLE IF EXISTS tasks`);
+  }
+};
+
+/**
  * All migrations in order
  */
 export const migrations: Migration[] = [
@@ -509,5 +541,6 @@ export const migrations: Migration[] = [
   migration004,
   migration005,
   migration006,
-  migration007
+  migration007,
+  migration008
 ];

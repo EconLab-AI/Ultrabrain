@@ -13,9 +13,12 @@ interface FeedProps {
   onLoadMore: () => void;
   isLoading: boolean;
   hasMore: boolean;
+  projects: string[];
+  currentFilter: string;
+  onFilterChange: (filter: string) => void;
 }
 
-export function Feed({ observations, summaries, prompts, onLoadMore, isLoading, hasMore }: FeedProps) {
+export function Feed({ observations, summaries, prompts, onLoadMore, isLoading, hasMore, projects, currentFilter, onFilterChange }: FeedProps) {
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const feedRef = useRef<HTMLDivElement>(null);
   const onLoadMoreRef = useRef(onLoadMore);
@@ -64,6 +67,21 @@ export function Feed({ observations, summaries, prompts, onLoadMore, isLoading, 
     <div className="feed" ref={feedRef}>
       <ScrollToTop targetRef={feedRef} />
       <div className="feed-content">
+        {/* Project filter bar */}
+        {projects.length > 0 && (
+          <div className="feed-project-filter">
+            <select
+              value={currentFilter}
+              onChange={e => onFilterChange(e.target.value)}
+            >
+              <option value="">All Projects</option>
+              {projects.map(project => (
+                <option key={project} value={project}>{project}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {items.map(item => {
           const key = `${item.itemType}-${item.id}`;
           if (item.itemType === 'observation') {
