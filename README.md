@@ -11,7 +11,7 @@
 </h1>
 
 <p align="center">
-  <strong>Persistent semantic memory for Claude Code. Native. Fast. Zero Python.</strong>
+  <strong>Persistent semantic memory for Claude Code & Claude Desktop. Native. Fast. Zero Python.</strong>
 </p>
 
 <p align="center">
@@ -23,13 +23,19 @@
 </p>
 
 <p align="center">
-  <a href="docs/i18n/README.zh.md">中文</a> · <a href="docs/i18n/README.ja.md">日本語</a> · <a href="docs/i18n/README.ko.md">한국어</a> · <a href="docs/i18n/README.de.md">Deutsch</a> · <a href="docs/i18n/README.fr.md">Français</a> · <a href="docs/i18n/README.es.md">Español</a> · <a href="docs/i18n/README.pt-br.md">Português</a> · <a href="docs/i18n/README.ru.md">Русский</a>
+  <a href="https://www.econlab-ai.com">Website</a> &middot;
+  <a href="https://x.com/EconLab_DE">X / Twitter</a> &middot;
+  <a href="https://github.com/EconLab-AI/Ultrabrain/issues">Issues</a>
 </p>
 
 <br>
 
 <p align="center">
-  UltraBrain gives Claude Code a persistent memory. It automatically captures what you work on, compresses it into semantic observations, and injects the right context into every new session. Claude remembers your architecture decisions, bug fixes, and project history — across sessions, across days, across weeks.
+  UltraBrain gives Claude a persistent memory — across sessions, across days, across weeks. It automatically captures what you work on, compresses it into semantic observations using the Claude Agent SDK, and injects the right context when you need it. Claude remembers your architecture decisions, bug fixes, project history, and brainstorming sessions.
+</p>
+
+<p align="center">
+  <strong>The first tool that bridges Claude Desktop and Claude Code through shared knowledge.</strong>
 </p>
 
 <br>
@@ -40,9 +46,11 @@
 
 ## Why UltraBrain?
 
-Claude Code is powerful — but it forgets everything when a session ends. Every new conversation starts from zero. You re-explain your architecture, re-describe your conventions, re-contextualize your bugs.
+Claude is powerful — but it forgets everything when a session ends. Every new conversation starts from zero. You re-explain your architecture, re-describe your conventions, re-contextualize your bugs.
 
 **UltraBrain fixes that.** It runs silently in the background, building a semantic knowledge base of everything you work on. When a new session starts, the right context is already there.
+
+And with the **Claude Desktop Bridge**, you can brainstorm and plan in Claude Desktop, save that knowledge to UltraBrain, and have it automatically available in your next Claude Code session. No copy-pasting. No context loss.
 
 <br>
 
@@ -63,16 +71,16 @@ Claude Code is powerful — but it forgets everything when a session ends. Every
       <td><code>&lt;2ms</code> semantic vector search</td>
     </tr>
     <tr>
+      <td><strong>Desktop Bridge</strong></td>
+      <td>Brainstorm in Claude Desktop, implement in Claude Code — shared knowledge base</td>
+    </tr>
+    <tr>
       <td><strong>Python Required</strong></td>
       <td><strong>No</strong> — pure TypeScript + Rust (via napi-rs)</td>
     </tr>
     <tr>
       <td><strong>Platform Support</strong></td>
-      <td>macOS · Linux · Windows — full support everywhere</td>
-    </tr>
-    <tr>
-      <td><strong>Process Count</strong></td>
-      <td>1 lightweight worker process</td>
+      <td>macOS &middot; Linux &middot; Windows — full support everywhere</td>
     </tr>
     <tr>
       <td><strong>Token Savings</strong></td>
@@ -81,6 +89,10 @@ Claude Code is powerful — but it forgets everything when a session ends. Every
     <tr>
       <td><strong>Embedding</strong></td>
       <td>ONNX in-process (all-MiniLM-L6-v2, 384-dim)</td>
+    </tr>
+    <tr>
+      <td><strong>Project Isolation</strong></td>
+      <td>Each project gets its own knowledge silo — no cross-contamination</td>
     </tr>
     <tr>
       <td><strong>Setup</strong></td>
@@ -97,7 +109,7 @@ Claude Code is powerful — but it forgets everything when a session ends. Every
 
 ## Quick Start
 
-Two commands. No Python. No configuration.
+### Claude Code Plugin (2 commands)
 
 ```
 /plugin marketplace add EconLab-AI/Ultrabrain
@@ -106,6 +118,45 @@ Two commands. No Python. No configuration.
 ```
 
 Restart Claude Code. Your sessions now have memory.
+
+<br>
+
+### Claude Desktop Bridge (optional)
+
+The MCP server is **included with the plugin** — no separate installation needed. To connect Claude Desktop to your UltraBrain knowledge base, add this to your Claude Desktop config:
+
+**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "ultrabrain": {
+      "command": "node",
+      "args": [
+        "~/.claude/plugins/cache/EconLab-AI/ultrabrain/1.0.0/scripts/mcp-server.cjs"
+      ]
+    }
+  }
+}
+```
+
+> **Note:** On macOS, replace `~` with your full home path (e.g. `/Users/yourname`). On Windows, use `%USERPROFILE%` or the full path.
+
+Restart Claude Desktop. You now have access to these tools:
+
+| Tool | Description |
+|------|-------------|
+| `list_projects()` | See all projects with stored knowledge |
+| `save_memory(text, title, project)` | Save plans, decisions, or brainstorming results |
+| `search(query, project)` | Search across your knowledge base |
+| `timeline(anchor)` | Get chronological context around a result |
+| `get_observations(ids)` | Fetch full details for specific memories |
+
+**Example workflow:**
+1. Brainstorm architecture in Claude Desktop
+2. `save_memory(text="We decided to use event sourcing for the audit trail...", project="my-app")`
+3. Open Claude Code in `my-app` — the decision is already in context
 
 <br>
 
@@ -155,6 +206,11 @@ Claude sees a concise summary of your project history at the start of every sess
 │  │           Web Viewer UI (React)                   │    │
 │  │           http://localhost:37777                   │    │
 │  └──────────────────────────────────────────────────┘    │
+│                                                          │
+│  ┌──────────────────────────────────────────────────┐    │
+│  │       MCP Server (stdio JSON-RPC)                 │    │
+│  │       Claude Desktop Bridge                       │    │
+│  └──────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────┘
         │                    │
         ▼                    ▼
@@ -173,6 +229,12 @@ Claude sees a concise summary of your project history at the start of every sess
 ### Persistent Memory
 Context survives across sessions, days, and weeks. Claude knows what you built yesterday.
 
+### Claude Desktop Bridge
+Brainstorm and plan in Claude Desktop, save decisions with `save_memory()`, and have them automatically available in Claude Code. The MCP server ships with the plugin — no separate installation.
+
+### Project Isolation
+Every project gets its own knowledge silo. Observations are tagged with the project name and all queries support project filtering. No cross-contamination between codebases.
+
 ### Semantic Vector Search
 LanceDB + all-MiniLM-L6-v2 embeddings find the most relevant memories, not just keyword matches. Search in <2ms.
 
@@ -186,7 +248,8 @@ Query your project history with natural language:
 search(query="authentication bug", type="bugfix", limit=10)
 timeline(anchor=123, depth_before=5, depth_after=5)
 get_observations(ids=[123, 456])
-save_memory(text="API requires X-API-Key header", title="API Auth")
+save_memory(text="API requires X-API-Key header", title="API Auth", project="my-api")
+list_projects()
 ```
 
 ### Web Viewer
@@ -249,8 +312,6 @@ Settings are managed in `~/.ultrabrain/settings.json` (auto-created on first run
 | `ULTRABRAIN_LOG_LEVEL` | `INFO` | Log verbosity |
 | `ULTRABRAIN_DATA_DIR` | `~/.ultrabrain` | Data directory |
 
-See [Configuration Guide](https://docs.ultrabrain.ai/configuration) for all options.
-
 <br>
 
 ---
@@ -285,11 +346,12 @@ npm run build-and-sync
 
 ## Contributing
 
-Contributions welcome.
+Contributions welcome. Please follow existing code patterns and include tests.
 
-1. Create a feature branch
-2. Make changes with tests
-3. Submit a Pull Request
+1. Fork the repository
+2. Create a feature branch
+3. Make changes with tests
+4. Submit a Pull Request
 
 <br>
 
@@ -301,11 +363,13 @@ Contributions welcome.
 
 **GNU Affero General Public License v3.0** (AGPL-3.0)
 
-Copyright (C) 2025 Giuliano Falco. All rights reserved.
+Copyright (C) 2025 [EconLab AI](https://www.econlab-ai.com). All rights reserved.
 
 - Use, modify, and distribute freely
 - Network server deployments must share source code
 - Derivative works must use AGPL-3.0
+
+The AGPL-3.0 license ensures UltraBrain remains open source while protecting against closed-source commercial exploitation. If you run a modified version of UltraBrain as a network service, you must make your source code available to users. This keeps the ecosystem fair and open for everyone.
 
 See [LICENSE](LICENSE) for full details.
 
@@ -316,9 +380,11 @@ See [LICENSE](LICENSE) for full details.
 <br>
 
 <p align="center">
-  <a href="https://github.com/EconLab-AI/Ultrabrain/issues">Issues</a> · <a href="https://x.com/UltraBrainAI">X / Twitter</a> · <a href="https://discord.com/invite/J4wttp9vDu">Discord</a>
+  <a href="https://www.econlab-ai.com">EconLab AI</a> &middot;
+  <a href="https://x.com/EconLab_DE">X / Twitter</a> &middot;
+  <a href="https://github.com/EconLab-AI/Ultrabrain/issues">Issues</a>
 </p>
 
 <p align="center">
-  <sub>Built with Claude Agent SDK · Powered by LanceDB · Made with TypeScript</sub>
+  <sub>Built by <a href="https://www.econlab-ai.com">EconLab AI</a> &middot; Powered by LanceDB &middot; Made with TypeScript</sub>
 </p>

@@ -16,6 +16,53 @@ interface HeaderProps {
   onContextPreviewToggle: () => void;
 }
 
+function BrainLogo({ isProcessing }: { isProcessing: boolean }) {
+  return (
+    <svg
+      className={`logomark ${isProcessing ? 'spinning' : ''}`}
+      width="28"
+      height="28"
+      viewBox="0 0 200 200"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <linearGradient id="ub-brain-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#2563EB"/>
+          <stop offset="45%" stopColor="#4F46E5"/>
+          <stop offset="100%" stopColor="#7C3AED"/>
+        </linearGradient>
+        <linearGradient id="ub-node-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#93C5FD"/>
+          <stop offset="100%" stopColor="#C4B5FD"/>
+        </linearGradient>
+      </defs>
+      <path d="M 93 20 C 58 20, 16 52, 16 100 C 16 148, 58 180, 93 180 Z" fill="url(#ub-brain-grad)" opacity="0.95"/>
+      <path d="M 107 20 C 142 20, 184 52, 184 100 C 184 148, 142 180, 107 180 Z" fill="url(#ub-brain-grad)" opacity="0.88"/>
+      <path d="M 30 62 Q 54 73, 87 66" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" opacity="0.30"/>
+      <path d="M 26 100 Q 50 113, 87 104" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" opacity="0.30"/>
+      <path d="M 30 138 Q 54 148, 87 142" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" opacity="0.30"/>
+      <path d="M 170 62 Q 146 73, 113 66" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" opacity="0.30"/>
+      <path d="M 174 100 Q 150 113, 113 104" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" opacity="0.30"/>
+      <path d="M 170 138 Q 146 148, 113 142" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" opacity="0.30"/>
+      <line x1="54" y1="54" x2="100" y2="100" stroke="white" strokeWidth="1.2" opacity="0.18"/>
+      <line x1="146" y1="54" x2="100" y2="100" stroke="white" strokeWidth="1.2" opacity="0.18"/>
+      <line x1="46" y1="100" x2="100" y2="100" stroke="white" strokeWidth="1.2" opacity="0.18"/>
+      <line x1="154" y1="100" x2="100" y2="100" stroke="white" strokeWidth="1.2" opacity="0.18"/>
+      <line x1="54" y1="146" x2="100" y2="100" stroke="white" strokeWidth="1.2" opacity="0.15"/>
+      <line x1="146" y1="146" x2="100" y2="100" stroke="white" strokeWidth="1.2" opacity="0.15"/>
+      <circle cx="54" cy="54" r="4.5" fill="url(#ub-node-glow)" opacity="0.85"/>
+      <circle cx="146" cy="54" r="4.5" fill="url(#ub-node-glow)" opacity="0.85"/>
+      <circle cx="46" cy="100" r="3.5" fill="url(#ub-node-glow)" opacity="0.75"/>
+      <circle cx="154" cy="100" r="3.5" fill="url(#ub-node-glow)" opacity="0.75"/>
+      <circle cx="54" cy="146" r="3.5" fill="url(#ub-node-glow)" opacity="0.70"/>
+      <circle cx="146" cy="146" r="3.5" fill="url(#ub-node-glow)" opacity="0.70"/>
+      <circle cx="100" cy="100" r="6" fill="white" opacity="0.92"/>
+      <circle cx="100" cy="100" r="3.5" fill="url(#ub-brain-grad)" opacity="0.6"/>
+    </svg>
+  );
+}
+
 export function Header({
   isConnected,
   projects,
@@ -33,51 +80,29 @@ export function Header({
     <div className="header">
       <h1>
         <div style={{ position: 'relative', display: 'inline-block' }}>
-          <img src="ultrabrain-logomark.webp" alt="" className={`logomark ${isProcessing ? 'spinning' : ''}`} />
+          <BrainLogo isProcessing={isProcessing} />
           {queueDepth > 0 && (
             <div className="queue-bubble">
               {queueDepth}
             </div>
           )}
         </div>
-        <span className="logo-text">ultrabrain</span>
+        <span className="logo-text">ULTRABRAIN</span>
+        <span className="logo-version">v1.0</span>
       </h1>
       <div className="status">
         <a
-          href="https://docs.ultrabrain.ai"
+          href="https://x.com/Econlab_DE"
           target="_blank"
           rel="noopener noreferrer"
           className="icon-link"
-          title="Documentation"
+          title="Follow @Econlab_DE on X"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-          </svg>
-        </a>
-        <a
-          href="https://x.com/UltraBrainAI"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="icon-link"
-          title="Follow us on X"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
             <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
           </svg>
         </a>
-        <a
-          href="https://discord.gg/J4wttp9vDu"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="icon-link"
-          title="Join our Discord community"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
-          </svg>
-        </a>
-        <GitHubStarsButton username="giulianofalco" repo="ultrabrain" />
+        <GitHubStarsButton username="EconLab-AI" repo="Ultrabrain" />
         <select
           value={currentFilter}
           onChange={e => onFilterChange(e.target.value)}

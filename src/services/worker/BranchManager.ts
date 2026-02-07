@@ -2,7 +2,7 @@
  * BranchManager: Git branch detection and switching for beta feature toggle
  *
  * Enables users to switch between stable (main) and beta branches via the UI.
- * The installed plugin at ~/.claude/plugins/marketplaces/giulianofalco/ is a git repo.
+ * The installed plugin at ~/.claude/plugins/marketplaces/EconLab-AI/ is a git repo.
  */
 
 import { execSync, spawnSync } from 'child_process';

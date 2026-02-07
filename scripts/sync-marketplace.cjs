@@ -11,8 +11,8 @@ const { existsSync, readFileSync } = require('fs');
 const path = require('path');
 const os = require('os');
 
-const INSTALLED_PATH = path.join(os.homedir(), '.claude', 'plugins', 'marketplaces', 'giulianofalco');
-const CACHE_BASE_PATH = path.join(os.homedir(), '.claude', 'plugins', 'cache', 'giulianofalco', 'ultrabrain');
+const INSTALLED_PATH = path.join(os.homedir(), '.claude', 'plugins', 'marketplaces', 'EconLab-AI');
+const CACHE_BASE_PATH = path.join(os.homedir(), '.claude', 'plugins', 'cache', 'EconLab-AI', 'ultrabrain');
 
 function getCurrentBranch() {
   try {
@@ -61,13 +61,13 @@ function getPluginVersion() {
 console.log('Syncing to marketplace...');
 try {
   execSync(
-    'rsync -av --delete --exclude=.git --exclude=/.mcp.json ./ ~/.claude/plugins/marketplaces/giulianofalco/',
+    'rsync -av --delete --exclude=.git --exclude=/.mcp.json ./ ~/.claude/plugins/marketplaces/EconLab-AI/',
     { stdio: 'inherit' }
   );
 
   console.log('Running npm install in marketplace...');
   execSync(
-    'cd ~/.claude/plugins/marketplaces/giulianofalco/ && npm install',
+    'cd ~/.claude/plugins/marketplaces/EconLab-AI/ && npm install',
     { stdio: 'inherit' }
   );
 
@@ -77,9 +77,17 @@ try {
 
   console.log(`Syncing to cache folder (version ${version})...`);
   execSync(
-    `rsync -av --delete --exclude=.git plugin/ "${CACHE_VERSION_PATH}/"`,
+    `rsync -av --delete --exclude=.git --exclude=node_modules plugin/ "${CACHE_VERSION_PATH}/"`,
     { stdio: 'inherit' }
   );
+
+  // Ensure node_modules symlink exists in cache (worker resolves modules from there)
+  const cacheNodeModules = path.join(CACHE_VERSION_PATH, 'node_modules');
+  const marketplaceNodeModules = path.join(INSTALLED_PATH, 'node_modules');
+  try {
+    const { lstatSync, symlinkSync, unlinkSync: unlinkSyncFs } = require('fs');
+    try { lstatSync(cacheNodeModules); } catch { symlinkSync(marketplaceNodeModules, cacheNodeModules); console.log('Created node_modules symlink in cache'); }
+  } catch (e) { console.log('Note: Could not create node_modules symlink:', e.message); }
 
   console.log('\x1b[32m%s\x1b[0m', 'Sync complete!');
 

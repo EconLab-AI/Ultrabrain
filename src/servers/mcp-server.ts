@@ -157,11 +157,10 @@ async function verifyWorkerConnection(): Promise<boolean> {
 const tools = [
   {
     name: '__IMPORTANT',
-    description: `3-LAYER WORKFLOW (ALWAYS FOLLOW):
-1. search(query) → Get index with IDs (~50-100 tokens/result)
-2. timeline(anchor=ID) → Get context around interesting results
-3. get_observations([IDs]) → Fetch full details ONLY for filtered IDs
-NEVER fetch full details without filtering first. 10x token savings.`,
+    description: `UltraBrain - Persistent memory across Claude Desktop & Claude Code.
+SEARCH WORKFLOW: search(query) → timeline(anchor=ID) → get_observations([IDs])
+SAVE KNOWLEDGE: save_memory(text, title, project) - saves plans/decisions for a project
+LIST PROJECTS: list_projects() - see all projects with stored knowledge`,
     inputSchema: {
       type: 'object',
       properties: {}
@@ -236,21 +235,21 @@ NEVER fetch full details without filtering first. 10x token savings.`,
   },
   {
     name: 'save_memory',
-    description: 'Save a manual memory/observation for semantic search. Use this to remember important information.',
+    description: 'Save knowledge to UltraBrain. Use from Claude Desktop to store plans, decisions, or brainstorming results for a specific project. The saved memory will be available in Claude Code sessions for that project.',
     inputSchema: {
       type: 'object',
       properties: {
         text: {
           type: 'string',
-          description: 'Content to remember (required)'
+          description: 'Content to save - architecture decisions, plans, brainstorming results, or any knowledge to remember (required)'
         },
         title: {
           type: 'string',
-          description: 'Short title (auto-generated from text if omitted)'
+          description: 'Short descriptive title (auto-generated if omitted)'
         },
         project: {
           type: 'string',
-          description: 'Project name (uses "ultrabrain" if omitted)'
+          description: 'Project name to associate this memory with. Use list_projects() to see existing projects. (defaults to "ultrabrain" if omitted)'
         }
       },
       required: ['text']
@@ -258,13 +257,42 @@ NEVER fetch full details without filtering first. 10x token savings.`,
     handler: async (args: any) => {
       return await callWorkerAPIPost('/api/memory/save', args);
     }
+  },
+  {
+    name: 'list_projects',
+    description: 'List all projects that UltraBrain has knowledge about. Returns project names. Use this to see which codebases have stored memories.',
+    inputSchema: {
+      type: 'object',
+      properties: {}
+    },
+    handler: async () => {
+      try {
+        const response = await fetch(`${WORKER_BASE_URL}/api/projects`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json() as { projects: string[] };
+        const projectList = data.projects?.length
+          ? data.projects.map((p: string) => `- ${p}`).join('\n')
+          : '(no projects yet)';
+        return {
+          content: [{
+            type: 'text' as const,
+            text: `# UltraBrain Projects\n\n${projectList}\n\nUse search(query="...", project="<name>") to search a specific project.`
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+          isError: true
+        };
+      }
+    }
   }
 ];
 
 // Create the MCP server
 const server = new Server(
   {
-    name: 'mcp-search-server',
+    name: 'ultrabrain',
     version: packageVersion,
   },
   {

@@ -13,7 +13,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 SOURCE_DIR="plugin/"
-DEST_DIR="$HOME/.claude/plugins/marketplaces/giulianofalco/plugin/"
+DEST_DIR="$HOME/.claude/plugins/marketplaces/EconLab-AI/plugin/"
 
 # Function to print colored output
 print_status() {

@@ -146,7 +146,7 @@ What is this for?
   const healthy = await checkWorkerHealth();
   if (!healthy) {
     console.log('Worker is not running. Start it with:');
-    console.log('  cd ~/.claude/plugins/marketplaces/giulianofalco && npm run worker:start\n');
+    console.log('  cd ~/.claude/plugins/marketplaces/EconLab-AI && npm run worker:start\n');
     process.exit(1);
   }
   console.log('Worker status: Running\n');
