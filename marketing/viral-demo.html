@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>UltraBrain - Give Your AI a Memory</title>
+<meta name="description" content="Persistent semantic memory for Claude Code. Your AI remembers everything."/>
+<meta property="og:title" content="UltraBrain - Your AI Has Amnesia. We Fixed It."/>
+<meta property="og:description" content="Persistent semantic memory for Claude Code. Sub-2ms search. 80% token savings. Zero config."/>
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://github.com/EconLab-AI/Ultrabrain"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="UltraBrain - Your AI Has Amnesia. We Fixed It."/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root{
+  --bg:#050508;
+  --surface:#0a0a10;
+  --glow-primary:#7c6aff;
+  --glow-secondary:#00e5ff;
+  --glow-accent:#ff3d71;
+  --text-primary:#f0f0f5;
+  --text-secondary:#8888aa;
+  --text-dim:#555570;
+}
+
+html,body{
+  width:100%;height:100%;overflow:hidden;
+  background:var(--bg);color:var(--text-primary);
+  font-family:'Inter',system-ui,sans-serif;
+}
+
+canvas#scene{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1}
+
+/* --- OVERLAY UI --- */
+.overlay{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  z-index:10;pointer-events:none;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+}
+
+/* Cinematic bars */
+.cine-bar{
+  position:fixed;left:0;width:100%;height:0;
+  background:#000;z-index:100;
+  transition:height 1.2s cubic-bezier(.25,.1,.25,1);
+}
+.cine-bar.top{top:0}
+.cine-bar.bottom{bottom:0}
+.cine-bar.active{height:60px}
+
+/* Phase text animations */
+.phase{
+  position:absolute;width:100%;text-align:center;
+  opacity:0;transform:translateY(30px);
+  transition:all 0.8s cubic-bezier(.25,.1,.25,1);
+}
+.phase.visible{opacity:1;transform:translateY(0)}
+.phase.exit{opacity:0;transform:translateY(-30px)}
+
+.phase-hook{top:35%}
+.phase-hook h1{
+  font-size:clamp(2rem,6vw,5rem);font-weight:900;
+  letter-spacing:-0.03em;line-height:1.1;
+  background:linear-gradient(135deg,#fff 0%,#aaa 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.phase-hook .sub{
+  font-size:clamp(0.9rem,2vw,1.5rem);color:var(--text-secondary);
+  margin-top:12px;font-weight:400;
+}
+
+.phase-reveal{top:25%}
+.phase-reveal h2{
+  font-size:clamp(1.4rem,4vw,3.5rem);font-weight:800;
+  letter-spacing:-0.02em;
+  background:linear-gradient(135deg,var(--glow-primary),var(--glow-secondary));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.phase-reveal .tagline{
+  font-size:clamp(0.8rem,1.8vw,1.3rem);
+  color:var(--text-secondary);margin-top:16px;
+  font-family:'JetBrains Mono',monospace;
+}
+
+/* Stats counter */
+.stats-row{
+  display:flex;gap:clamp(20px,5vw,60px);justify-content:center;
+  margin-top:40px;opacity:0;transform:translateY(20px);
+  transition:all 0.6s ease 0.3s;
+}
+.stats-row.visible{opacity:1;transform:translateY(0)}
+.stat{text-align:center}
+.stat-value{
+  font-size:clamp(1.8rem,4vw,3.2rem);font-weight:800;
+  font-family:'JetBrains Mono',monospace;
+  background:linear-gradient(135deg,var(--glow-secondary),var(--glow-primary));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.stat-label{
+  font-size:clamp(0.6rem,1.2vw,0.85rem);
+  color:var(--text-dim);text-transform:uppercase;
+  letter-spacing:0.1em;margin-top:4px;
+}
+
+/* Feature pills */
+.features{
+  position:absolute;bottom:15%;width:100%;
+  display:flex;justify-content:center;gap:12px;flex-wrap:wrap;
+  padding:0 20px;
+  opacity:0;transition:opacity 0.6s ease;
+}
+.features.visible{opacity:1}
+.pill{
+  padding:8px 18px;border-radius:100px;
+  background:rgba(124,106,255,0.1);
+  border:1px solid rgba(124,106,255,0.25);
+  font-size:clamp(0.65rem,1.1vw,0.8rem);
+  font-family:'JetBrains Mono',monospace;
+  color:var(--glow-primary);white-space:nowrap;
+  transform:translateY(10px);opacity:0;
+  transition:all 0.4s ease;
+}
+.pill.visible{transform:translateY(0);opacity:1}
+
+/* CTA */
+.cta-container{
+  position:absolute;bottom:6%;width:100%;text-align:center;
+  opacity:0;transform:translateY(20px);
+  transition:all 0.8s cubic-bezier(.25,.1,.25,1);
+  pointer-events:auto;
+}
+.cta-container.visible{opacity:1;transform:translateY(0)}
+.cta-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:14px 32px;border-radius:12px;
+  background:linear-gradient(135deg,var(--glow-primary),#5a4ad4);
+  color:#fff;font-weight:700;font-size:1rem;
+  text-decoration:none;border:none;cursor:pointer;
+  box-shadow:0 0 40px rgba(124,106,255,0.3);
+  transition:all 0.3s ease;
+  font-family:'Inter',sans-serif;
+}
+.cta-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 0 60px rgba(124,106,255,0.5);
+}
+.cta-btn svg{width:20px;height:20px}
+.cta-sub{
+  margin-top:10px;font-size:0.75rem;color:var(--text-dim);
+  font-family:'JetBrains Mono',monospace;
+}
+
+/* Terminal typing effect */
+.terminal{
+  position:absolute;bottom:28%;left:50%;transform:translateX(-50%);
+  background:rgba(10,10,20,0.85);border:1px solid rgba(124,106,255,0.15);
+  border-radius:12px;padding:16px 24px;
+  font-family:'JetBrains Mono',monospace;font-size:clamp(0.7rem,1.2vw,0.9rem);
+  max-width:90%;width:500px;
+  opacity:0;transition:opacity 0.6s ease;
+  backdrop-filter:blur(10px);
+}
+.terminal.visible{opacity:1}
+.terminal .prompt{color:var(--glow-secondary)}
+.terminal .cmd{color:var(--text-primary)}
+.terminal .cursor{
+  display:inline-block;width:8px;height:1.1em;
+  background:var(--glow-primary);vertical-align:text-bottom;
+  animation:blink 0.8s step-end infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* Particle counter */
+.memory-counter{
+  position:fixed;top:20px;right:20px;z-index:20;
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.7rem;color:var(--text-dim);
+  text-align:right;opacity:0;transition:opacity 0.5s;
+}
+.memory-counter.visible{opacity:1}
+.memory-counter .count{
+  font-size:1.4rem;font-weight:700;
+  color:var(--glow-secondary);
+}
+
+/* Logo */
+.logo{
+  position:fixed;top:20px;left:20px;z-index:20;
+  display:flex;align-items:center;gap:10px;
+  opacity:0;transition:opacity 0.5s;
+}
+.logo.visible{opacity:1}
+.logo-icon{
+  width:32px;height:32px;
+  background:linear-gradient(135deg,var(--glow-primary),var(--glow-secondary));
+  border-radius:8px;display:flex;align-items:center;justify-content:center;
+}
+.logo-icon svg{width:20px;height:20px}
+.logo-text{
+  font-weight:700;font-size:1rem;
+  letter-spacing:-0.02em;
+}
+
+/* Replay button */
+.replay-btn{
+  position:fixed;bottom:20px;right:20px;z-index:20;
+  padding:8px 16px;border-radius:8px;
+  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+  color:var(--text-dim);font-size:0.7rem;cursor:pointer;
+  font-family:'JetBrains Mono',monospace;
+  transition:all 0.3s ease;pointer-events:auto;
+  opacity:0;transition:opacity 0.5s;
+}
+.replay-btn.visible{opacity:1}
+.replay-btn:hover{background:rgba(255,255,255,0.1);color:var(--text-primary)}
+
+/* Responsive */
+@media(max-width:600px){
+  .cine-bar.active{height:40px}
+  .stats-row{flex-direction:column;gap:16px;align-items:center}
+  .features{gap:8px}
+}
+</style>
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+
+<div class="overlay">
+  <!-- Cinematic bars -->
+  <div class="cine-bar top" id="cineTop"></div>
+  <div class="cine-bar bottom" id="cineBottom"></div>
+
+  <!-- Logo -->
+  <div class="logo" id="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/>
+        <path d="M12 2c-2 3-3 6-3 10s1 7 3 10"/>
+        <path d="M12 2c2 3 3 6 3 10s-1 7-3 10"/>
+        <path d="M2 12h20"/>
+      </svg>
+    </div>
+    <span class="logo-text">UltraBrain</span>
+  </div>
+
+  <!-- Memory counter -->
+  <div class="memory-counter" id="memCounter">
+    <div>memories stored</div>
+    <div class="count" id="memCount">0</div>
+  </div>
+
+  <!-- Phase 1: Hook -->
+  <div class="phase phase-hook" id="phaseHook">
+    <h1>Your AI has<br/>amnesia.</h1>
+    <div class="sub">Every session starts from zero.</div>
+  </div>
+
+  <!-- Phase 2: Reveal -->
+  <div class="phase phase-reveal" id="phaseReveal">
+    <h2>We gave it a brain.</h2>
+    <div class="tagline">Persistent semantic memory for Claude Code</div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat">
+      <div class="stat-value" id="statSpeed">0</div>
+      <div class="stat-label">ms search latency</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="statTokens">0</div>
+      <div class="stat-label">% token savings</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="statSetup">0</div>
+      <div class="stat-label">min setup</div>
+    </div>
+  </div>
+
+  <!-- Terminal -->
+  <div class="terminal" id="terminal">
+    <span class="prompt">$ </span><span class="cmd" id="termCmd"></span><span class="cursor"></span>
+  </div>
+
+  <!-- Features -->
+  <div class="features" id="features">
+    <div class="pill">Vector Search</div>
+    <div class="pill">3D Brain UI</div>
+    <div class="pill">Zero Python</div>
+    <div class="pill">Claude Desktop Bridge</div>
+    <div class="pill">Privacy-First</div>
+    <div class="pill">Open Source</div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-container" id="cta">
+    <a class="cta-btn" href="https://github.com/EconLab-AI/Ultrabrain" target="_blank">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+      Star on GitHub
+    </a>
+    <div class="cta-sub">npm i ultrabrain &middot; AGPL-3.0 &middot; Made by EconLab AI</div>
+  </div>
+
+  <!-- Replay -->
+  <button class="replay-btn" id="replayBtn" onclick="location.reload()">replay</button>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+
+// ─── CONFIG ───
+const PARTICLE_COUNT = 2400;
+const NODE_COUNT = 80;
+const CONNECTION_COUNT = 140;
+const BRAIN_RADIUS = 2.8;
+
+// ─── RENDERER ───
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x050508);
+scene.fog = new THREE.FogExp2(0x050508, 0.06);
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 0, 12);
+
+// ─── LIGHTS ───
+const ambientLight = new THREE.AmbientLight(0x222244, 0.3);
+scene.add(ambientLight);
+
+const keyLight = new THREE.DirectionalLight(0x7c6aff, 0.8);
+keyLight.position.set(5, 5, 8);
+scene.add(keyLight);
+
+const fillLight = new THREE.DirectionalLight(0x00e5ff, 0.4);
+fillLight.position.set(-5, -3, 5);
+scene.add(fillLight);
+
+const rimLight = new THREE.PointLight(0xff3d71, 0.6, 20);
+rimLight.position.set(0, 5, -5);
+scene.add(rimLight);
+
+// ─── BRAIN GEOMETRY ───
+// Create brain-like shape using two deformed hemispheres
+const brainGroup = new THREE.Group();
+
+function createHemisphere(side) {
+  const geo = new THREE.SphereGeometry(
+    BRAIN_RADIUS, 64, 48,
+    side === 'left' ? Math.PI / 2 : 0,
+    Math.PI, 0, Math.PI
+  );
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    let x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    // Brain folds (sulci)
+    const fold1 = Math.sin(y * 5.0) * 0.08;
+    const fold2 = Math.sin(y * 2.5 + x * 1.8) * 0.06;
+    const fold3 = Math.cos(z * 3.5 + y * 1.5) * 0.05;
+    const fold4 = Math.sin(x * 4.0 + z * 2.0) * 0.03;
+    const r = Math.sqrt(x*x + y*y + z*z);
+    if (r > 0) {
+      const d = fold1 + fold2 + fold3 + fold4;
+      const s = 1 + d / r;
+      pos.setXYZ(i, x*s, y*s, z*s);
+    }
+  }
+  geo.computeVertexNormals();
+
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xc8c0f0,
+    roughness: 0.55,
+    metalness: 0.2,
+    transparent: true,
+    opacity: 0,
+    wireframe: false,
+    side: THREE.DoubleSide,
+  });
+
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.x = side === 'left' ? -0.15 : 0.15;
+  return mesh;
+}
+
+const leftHemi = createHemisphere('left');
+const rightHemi = createHemisphere('right');
+brainGroup.add(leftHemi, rightHemi);
+scene.add(brainGroup);
+
+// ─── NEURAL NODES ───
+const nodePositions = [];
+const nodeMeshes = [];
+const nodeGroup = new THREE.Group();
+
+for (let i = 0; i < NODE_COUNT; i++) {
+  // Distribute on brain surface using fibonacci sphere
+  const phi = Math.acos(1 - 2 * (i + 0.5) / NODE_COUNT);
+  const theta = Math.PI * (1 + Math.sqrt(5)) * (i + 0.5);
+  const r = BRAIN_RADIUS * (0.85 + Math.random() * 0.3);
+  const x = r * Math.sin(phi) * Math.cos(theta);
+  const y = r * Math.sin(phi) * Math.sin(theta);
+  const z = r * Math.cos(phi);
+  nodePositions.push(new THREE.Vector3(x, y, z));
+
+  const size = 0.03 + Math.random() * 0.05;
+  const geo = new THREE.SphereGeometry(size, 8, 8);
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    emissive: i % 3 === 0 ? 0x7c6aff : i % 3 === 1 ? 0x00e5ff : 0xff3d71,
+    emissiveIntensity: 0,
+    transparent: true,
+    opacity: 0,
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.copy(nodePositions[i]);
+  mesh.userData = { baseEmissive: mat.emissive.clone(), phaseOffset: Math.random() * Math.PI * 2 };
+  nodeMeshes.push(mesh);
+  nodeGroup.add(mesh);
+}
+scene.add(nodeGroup);
+
+// ─── NEURAL CONNECTIONS ───
+const connectionLines = [];
+const connectionGroup = new THREE.Group();
+
+for (let i = 0; i < CONNECTION_COUNT; i++) {
+  const a = Math.floor(Math.random() * NODE_COUNT);
+  let b = Math.floor(Math.random() * NODE_COUNT);
+  while (b === a) b = Math.floor(Math.random() * NODE_COUNT);
+
+  // Only connect if close enough
+  if (nodePositions[a].distanceTo(nodePositions[b]) > BRAIN_RADIUS * 1.2) {
+    i--;
+    continue;
+  }
+
+  const pts = [];
+  const start = nodePositions[a];
+  const end = nodePositions[b];
+  const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+  // Curve inward toward brain center
+  mid.multiplyScalar(0.7);
+
+  const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
+  const points = curve.getPoints(20);
+
+  const geo = new THREE.BufferGeometry().setFromPoints(points);
+  const mat = new THREE.LineBasicMaterial({
+    color: i % 2 === 0 ? 0x7c6aff : 0x00e5ff,
+    transparent: true,
+    opacity: 0,
+  });
+  const line = new THREE.Line(geo, mat);
+  line.userData = { phaseOffset: Math.random() * Math.PI * 2 };
+  connectionLines.push(line);
+  connectionGroup.add(line);
+}
+scene.add(connectionGroup);
+
+// ─── FLOATING PARTICLES ───
+const particleGeo = new THREE.BufferGeometry();
+const particlePositions = new Float32Array(PARTICLE_COUNT * 3);
+const particleSpeeds = new Float32Array(PARTICLE_COUNT);
+const particlePhases = new Float32Array(PARTICLE_COUNT);
+
+for (let i = 0; i < PARTICLE_COUNT; i++) {
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.acos(2 * Math.random() - 1);
+  const r = BRAIN_RADIUS * (1.5 + Math.random() * 3);
+  particlePositions[i*3] = r * Math.sin(phi) * Math.cos(theta);
+  particlePositions[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+  particlePositions[i*3+2] = r * Math.cos(phi);
+  particleSpeeds[i] = 0.2 + Math.random() * 0.8;
+  particlePhases[i] = Math.random() * Math.PI * 2;
+}
+particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+
+const particleMat = new THREE.PointsMaterial({
+  color: 0x7c6aff,
+  size: 0.03,
+  transparent: true,
+  opacity: 0,
+  blending: THREE.AdditiveBlending,
+  sizeAttenuation: true,
+});
+const particles = new THREE.Points(particleGeo, particleMat);
+scene.add(particles);
+
+// ─── INNER GLOW (core) ───
+const coreGeo = new THREE.SphereGeometry(0.4, 32, 32);
+const coreMat = new THREE.MeshStandardMaterial({
+  color: 0x7c6aff,
+  emissive: 0x7c6aff,
+  emissiveIntensity: 0,
+  transparent: true,
+  opacity: 0,
+});
+const core = new THREE.Mesh(coreGeo, coreMat);
+scene.add(core);
+
+// ─── PULSE RING ───
+const ringGeo = new THREE.RingGeometry(0.5, 0.55, 64);
+const ringMat = new THREE.MeshBasicMaterial({
+  color: 0x00e5ff,
+  transparent: true,
+  opacity: 0,
+  side: THREE.DoubleSide,
+});
+const ring = new THREE.Mesh(ringGeo, ringMat);
+scene.add(ring);
+
+// ─── ANIMATION TIMELINE ───
+let startTime = Date.now();
+let phase = 0; // 0=dark, 1=hook, 2=reveal, 3=brain-awaken, 4=full-glory, 5=cta
+let memoryCount = 0;
+
+const timeline = [
+  { t: 0,    phase: 0 },  // darkness
+  { t: 1000, phase: 1 },  // hook text
+  { t: 4500, phase: 2 },  // reveal text
+  { t: 7000, phase: 3 },  // brain awakens
+  { t: 10500, phase: 4 }, // stats + features
+  { t: 14000, phase: 5 }, // CTA
+];
+
+function getPhase(elapsed) {
+  let p = 0;
+  for (const entry of timeline) {
+    if (elapsed >= entry.t) p = entry.phase;
+  }
+  return p;
+}
+
+// ─── UI ELEMENTS ───
+const $hook = document.getElementById('phaseHook');
+const $reveal = document.getElementById('phaseReveal');
+const $stats = document.getElementById('statsRow');
+const $features = document.getElementById('features');
+const $cta = document.getElementById('cta');
+const $terminal = document.getElementById('terminal');
+const $termCmd = document.getElementById('termCmd');
+const $memCounter = document.getElementById('memCounter');
+const $memCount = document.getElementById('memCount');
+const $logo = document.getElementById('logo');
+const $cineTop = document.getElementById('cineTop');
+const $cineBottom = document.getElementById('cineBottom');
+const $replay = document.getElementById('replayBtn');
+const $statSpeed = document.getElementById('statSpeed');
+const $statTokens = document.getElementById('statTokens');
+const $statSetup = document.getElementById('statSetup');
+const pills = document.querySelectorAll('.pill');
+
+let prevPhase = -1;
+const typed = { text: '', target: 'claude plugin install ultrabrain', index: 0, done: false };
+let statsAnimated = false;
+
+function animateStats() {
+  if (statsAnimated) return;
+  statsAnimated = true;
+  const targets = [
+    { el: $statSpeed, target: 1.3, decimals: 1, prefix: '<' },
+    { el: $statTokens, target: 80, decimals: 0, prefix: '' },
+    { el: $statSetup, target: 2, decimals: 0, prefix: '<' },
+  ];
+  targets.forEach(({ el, target, decimals, prefix }) => {
+    let current = 0;
+    const step = target / 40;
+    const interval = setInterval(() => {
+      current += step;
+      if (current >= target) { current = target; clearInterval(interval); }
+      el.textContent = prefix + current.toFixed(decimals);
+    }, 25);
+  });
+}
+
+function updateUI(elapsed) {
+  const p = getPhase(elapsed);
+  if (p === prevPhase) return;
+  prevPhase = p;
+
+  // Cinematic bars
+  if (p >= 1) { $cineTop.classList.add('active'); $cineBottom.classList.add('active'); }
+
+  // Phase transitions
+  $hook.className = 'phase phase-hook' + (p === 1 ? ' visible' : p > 1 ? ' exit' : '');
+  $reveal.className = 'phase phase-reveal' + (p === 2 ? ' visible' : p > 2 ? ' exit' : '');
+
+  if (p >= 3) { $logo.classList.add('visible'); $memCounter.classList.add('visible'); }
+  if (p >= 4) {
+    $stats.classList.add('visible');
+    $features.classList.add('visible');
+    $terminal.classList.add('visible');
+    animateStats();
+    pills.forEach((pill, i) => setTimeout(() => pill.classList.add('visible'), i * 120));
+  }
+  if (p >= 5) {
+    $cta.classList.add('visible');
+    $replay.classList.add('visible');
+    $cineTop.classList.remove('active');
+    $cineBottom.classList.remove('active');
+  }
+}
+
+// Typing effect
+function updateTyping(elapsed) {
+  if (prevPhase < 4 || typed.done) return;
+  if (typed.index < typed.target.length) {
+    typed.index++;
+    $termCmd.textContent = typed.target.substring(0, typed.index);
+  } else {
+    typed.done = true;
+  }
+}
+
+// ─── RENDER LOOP ───
+function animate() {
+  requestAnimationFrame(animate);
+  const elapsed = Date.now() - startTime;
+  const t = elapsed * 0.001;
+  const p = getPhase(elapsed);
+
+  updateUI(elapsed);
+  updateTyping(elapsed);
+
+  // --- Brain opacity & rotation ---
+  const brainOpacity = p >= 3 ? Math.min(1, (elapsed - 7000) / 2000) * 0.88 : p >= 2 ? Math.min(1, (elapsed - 4500) / 2000) * 0.15 : 0;
+  leftHemi.material.opacity = brainOpacity;
+  rightHemi.material.opacity = brainOpacity * 0.82;
+
+  const rotSpeed = p >= 3 ? 0.15 : 0.05;
+  brainGroup.rotation.y += rotSpeed * 0.016;
+  brainGroup.rotation.x = Math.sin(t * 0.3) * 0.1;
+
+  // --- Nodes ---
+  const nodeOpacity = p >= 3 ? Math.min(1, (elapsed - 7000) / 1500) : 0;
+  nodeMeshes.forEach((mesh, i) => {
+    mesh.material.opacity = nodeOpacity * (0.6 + Math.sin(t * 2 + mesh.userData.phaseOffset) * 0.4);
+    mesh.material.emissiveIntensity = nodeOpacity * (0.5 + Math.sin(t * 3 + mesh.userData.phaseOffset) * 0.5);
+    // Rotate with brain
+    const angle = rotSpeed * 0.016;
+    const x = mesh.position.x;
+    const z = mesh.position.z;
+    mesh.position.x = x * Math.cos(angle) - z * Math.sin(angle);
+    mesh.position.z = x * Math.sin(angle) + z * Math.cos(angle);
+  });
+
+  // --- Connections ---
+  const connOpacity = p >= 3 ? Math.min(1, (elapsed - 7500) / 2000) : 0;
+  connectionLines.forEach((line, i) => {
+    line.material.opacity = connOpacity * (0.08 + Math.sin(t * 1.5 + line.userData.phaseOffset) * 0.12);
+  });
+  connectionGroup.rotation.y = brainGroup.rotation.y;
+  connectionGroup.rotation.x = brainGroup.rotation.x;
+
+  // --- Particles ---
+  const pOpacity = p >= 2 ? Math.min(1, (elapsed - 4500) / 2000) * 0.6 : 0;
+  particleMat.opacity = pOpacity;
+  const posArr = particles.geometry.attributes.position.array;
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    const speed = particleSpeeds[i];
+    const phase = particlePhases[i];
+    // Orbit around center
+    const x = posArr[i*3];
+    const z = posArr[i*3+2];
+    const angle = speed * 0.003;
+    posArr[i*3] = x * Math.cos(angle) - z * Math.sin(angle);
+    posArr[i*3+2] = x * Math.sin(angle) + z * Math.cos(angle);
+    // Gentle bob
+    posArr[i*3+1] += Math.sin(t * speed + phase) * 0.001;
+  }
+  particles.geometry.attributes.position.needsUpdate = true;
+
+  // Pull particles toward brain in phase 3+
+  if (p >= 3) {
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const x = posArr[i*3], y = posArr[i*3+1], z = posArr[i*3+2];
+      const dist = Math.sqrt(x*x + y*y + z*z);
+      if (dist > BRAIN_RADIUS * 1.1) {
+        const pull = 0.002 * particleSpeeds[i];
+        posArr[i*3] -= (x / dist) * pull;
+        posArr[i*3+1] -= (y / dist) * pull;
+        posArr[i*3+2] -= (z / dist) * pull;
+      }
+    }
+  }
+
+  // --- Core glow ---
+  const coreIntensity = p >= 3 ? Math.min(1, (elapsed - 7000) / 1000) : 0;
+  coreMat.opacity = coreIntensity * 0.6;
+  coreMat.emissiveIntensity = coreIntensity * (1.5 + Math.sin(t * 2) * 0.5);
+
+  // --- Pulse ring ---
+  if (p >= 3) {
+    const pulseT = ((elapsed - 7000) % 3000) / 3000;
+    ring.scale.setScalar(1 + pulseT * 8);
+    ringMat.opacity = (1 - pulseT) * 0.3 * coreIntensity;
+    ring.lookAt(camera.position);
+  }
+
+  // --- Memory counter ---
+  if (p >= 3 && memoryCount < 1247) {
+    memoryCount = Math.min(1247, memoryCount + Math.ceil(Math.random() * 8));
+    $memCount.textContent = memoryCount.toLocaleString();
+  }
+
+  // --- Camera ---
+  if (p < 2) {
+    camera.position.z = 12;
+  } else if (p === 2) {
+    camera.position.z = Math.max(8, 12 - (elapsed - 4500) * 0.002);
+  } else if (p >= 3) {
+    camera.position.z = Math.max(6, 8 - (elapsed - 7000) * 0.0005);
+    camera.position.x = Math.sin(t * 0.2) * 0.3;
+    camera.position.y = Math.cos(t * 0.15) * 0.2;
+  }
+  camera.lookAt(0, 0, 0);
+
+  // --- Light animation ---
+  keyLight.intensity = 0.8 + Math.sin(t * 1.5) * 0.2;
+  fillLight.intensity = 0.4 + Math.cos(t * 1.2) * 0.1;
+
+  renderer.render(scene, camera);
+}
+
+animate();
+
+// ─── RESIZE ───
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ─── MOUSE INTERACTION ───
+let mouseX = 0, mouseY = 0;
+document.addEventListener('mousemove', (e) => {
+  mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+  mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+  // Subtle camera follow
+  camera.position.x += (mouseX * 0.5 - camera.position.x) * 0.02;
+  camera.position.y += (-mouseY * 0.3 - camera.position.y) * 0.02;
+});
+</script>
+
+</body>
+</html>
