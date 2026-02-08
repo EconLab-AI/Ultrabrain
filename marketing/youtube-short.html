@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>UltraBrain - YouTube Short</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --glow-purple:#7c6aff;
+  --glow-cyan:#00e5ff;
+  --glow-pink:#ff3d71;
+  --bg:#050508;
+}
+
+html,body{
+  width:100%;height:100%;overflow:hidden;
+  background:var(--bg);color:#fff;
+  font-family:'Inter',system-ui,sans-serif;
+}
+
+/* ===== 9:16 FRAME ===== */
+.frame{
+  position:fixed;
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  /* Aspect ratio 9:16 - fills height, centers horizontally */
+  height:100vh;
+  width:calc(100vh * 9 / 16);
+  max-width:100vw;
+  max-height:calc(100vw * 16 / 9);
+  background:var(--bg);
+  overflow:hidden;
+}
+
+canvas#scene{position:absolute;top:0;left:0;width:100%;height:100%}
+
+/* ===== SUBTITLE SYSTEM ===== */
+.subtitle-container{
+  position:absolute;
+  bottom:18%;left:0;width:100%;
+  z-index:50;
+  display:flex;justify-content:center;
+  padding:0 8%;
+  pointer-events:none;
+}
+
+.subtitle{
+  text-align:center;
+  opacity:0;
+  transform:scale(0.85) translateY(15px);
+  transition:all 0.35s cubic-bezier(.34,1.56,.64,1);
+}
+.subtitle.visible{
+  opacity:1;
+  transform:scale(1) translateY(0);
+}
+.subtitle.exit{
+  opacity:0;
+  transform:scale(0.9) translateY(-10px);
+  transition:all 0.25s ease-in;
+}
+
+.sub-line{
+  display:inline;
+  font-weight:800;
+  font-size:clamp(1.4rem, 5vh, 2.6rem);
+  line-height:1.3;
+  letter-spacing:-0.02em;
+  /* White text with black outline for readability */
+  color:#fff;
+  text-shadow:
+    0 0 20px rgba(0,0,0,0.9),
+    0 2px 8px rgba(0,0,0,0.8),
+    0 0 40px rgba(0,0,0,0.5);
+}
+
+/* Highlighted word (key word pop) */
+.sub-line .hl{
+  background:linear-gradient(135deg,var(--glow-purple),var(--glow-cyan));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  filter:drop-shadow(0 0 12px rgba(124,106,255,0.6));
+}
+.sub-line .hl-pink{
+  background:linear-gradient(135deg,var(--glow-pink),#ff7eb3);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  filter:drop-shadow(0 0 12px rgba(255,61,113,0.6));
+}
+.sub-line .hl-cyan{
+  background:linear-gradient(135deg,var(--glow-cyan),#7cfcff);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  filter:drop-shadow(0 0 12px rgba(0,229,255,0.6));
+}
+
+/* Big impact number */
+.stat-impact{
+  font-size:clamp(3rem,10vh,6rem);
+  font-weight:900;
+  font-family:'JetBrains Mono',monospace;
+  background:linear-gradient(135deg,var(--glow-cyan),var(--glow-purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  filter:drop-shadow(0 0 20px rgba(0,229,255,0.5));
+  display:block;
+  animation:none;
+}
+.stat-impact.pop{
+  animation:popIn 0.4s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popIn{
+  0%{transform:scale(0.3);opacity:0}
+  100%{transform:scale(1);opacity:1}
+}
+
+.stat-label{
+  font-size:clamp(0.8rem,2.5vh,1.2rem);
+  font-weight:600;
+  color:rgba(255,255,255,0.7);
+  margin-top:4px;
+  letter-spacing:0.05em;
+  text-transform:uppercase;
+}
+
+/* Terminal line */
+.terminal-sub{
+  background:rgba(10,10,20,0.85);
+  border:1px solid rgba(124,106,255,0.2);
+  border-radius:10px;
+  padding:12px 20px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:clamp(0.7rem,2vh,1rem);
+  backdrop-filter:blur(8px);
+  display:inline-block;
+  text-align:left;
+}
+.terminal-sub .prompt{color:var(--glow-cyan)}
+.terminal-sub .cursor{
+  display:inline-block;width:8px;height:1.1em;
+  background:var(--glow-purple);vertical-align:text-bottom;
+  animation:blink 0.7s step-end infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* Logo watermark */
+.logo-mark{
+  position:absolute;top:5%;left:50%;transform:translateX(-50%);
+  z-index:40;
+  display:flex;align-items:center;gap:8px;
+  opacity:0;transition:opacity 0.5s;
+}
+.logo-mark.visible{opacity:1}
+.logo-mark .icon{
+  width:28px;height:28px;
+  background:linear-gradient(135deg,var(--glow-purple),var(--glow-cyan));
+  border-radius:7px;display:flex;align-items:center;justify-content:center;
+}
+.logo-mark .icon svg{width:18px;height:18px}
+.logo-mark .name{font-weight:700;font-size:0.95rem;letter-spacing:-0.01em}
+
+/* CTA overlay */
+.cta-overlay{
+  position:absolute;bottom:8%;left:0;width:100%;
+  text-align:center;z-index:50;
+  opacity:0;transform:translateY(20px);
+  transition:all 0.6s cubic-bezier(.25,.1,.25,1);
+  pointer-events:auto;
+}
+.cta-overlay.visible{opacity:1;transform:translateY(0)}
+.cta-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:12px 28px;border-radius:12px;
+  background:linear-gradient(135deg,var(--glow-purple),#5a4ad4);
+  color:#fff;font-weight:700;font-size:0.95rem;
+  text-decoration:none;border:none;cursor:pointer;
+  box-shadow:0 0 30px rgba(124,106,255,0.4);
+  font-family:'Inter',sans-serif;
+}
+.cta-btn svg{width:18px;height:18px}
+.cta-sub{
+  margin-top:8px;font-size:0.65rem;color:rgba(255,255,255,0.4);
+  font-family:'JetBrains Mono',monospace;
+}
+
+/* Progress bar */
+.progress{
+  position:absolute;top:0;left:0;height:3px;
+  background:linear-gradient(90deg,var(--glow-purple),var(--glow-cyan));
+  z-index:60;transition:width 0.1s linear;
+  box-shadow:0 0 10px rgba(124,106,255,0.5);
+}
+
+/* ===== TELEPROMPTER ===== */
+.teleprompter{
+  position:fixed;top:0;right:0;
+  width:320px;height:100vh;
+  background:rgba(0,0,0,0.95);
+  border-left:1px solid rgba(124,106,255,0.2);
+  z-index:1000;
+  padding:20px;overflow-y:auto;
+  font-family:'Inter',sans-serif;
+  display:none;
+}
+.teleprompter.active{display:block}
+.teleprompter h3{
+  font-size:0.8rem;color:var(--glow-purple);
+  text-transform:uppercase;letter-spacing:0.1em;
+  margin-bottom:16px;
+}
+.tp-line{
+  padding:10px 12px;margin-bottom:8px;
+  border-radius:8px;border-left:3px solid transparent;
+  font-size:0.85rem;line-height:1.5;
+  color:rgba(255,255,255,0.5);
+  transition:all 0.3s ease;
+}
+.tp-line.active{
+  background:rgba(124,106,255,0.1);
+  border-left-color:var(--glow-purple);
+  color:#fff;
+}
+.tp-line .tp-time{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.65rem;color:var(--glow-cyan);
+  margin-bottom:4px;display:block;
+}
+
+/* Controls */
+.controls{
+  position:fixed;bottom:10px;left:50%;transform:translateX(-50%);
+  z-index:200;display:flex;gap:8px;
+  opacity:0.3;transition:opacity 0.3s;
+}
+.controls:hover{opacity:1}
+.ctrl-btn{
+  padding:6px 14px;border-radius:6px;
+  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
+  color:#aaa;font-size:0.65rem;cursor:pointer;
+  font-family:'JetBrains Mono',monospace;
+  transition:all 0.2s;
+}
+.ctrl-btn:hover{background:rgba(255,255,255,0.15);color:#fff}
+.ctrl-btn.active{background:rgba(124,106,255,0.2);border-color:var(--glow-purple);color:var(--glow-purple)}
+</style>
+</head>
+<body>
+
+<div class="frame" id="frame">
+  <canvas id="scene"></canvas>
+  <div class="progress" id="progress"></div>
+
+  <!-- Logo -->
+  <div class="logo-mark" id="logo">
+    <div class="icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 2c-2 3-3 6-3 10s1 7 3 10"/>
+        <path d="M12 2c2 3 3 6 3 10s-1 7-3 10"/>
+        <path d="M2 12h20"/>
+      </svg>
+    </div>
+    <span class="name">UltraBrain</span>
+  </div>
+
+  <!-- Subtitle area -->
+  <div class="subtitle-container">
+    <div class="subtitle" id="subtitle"></div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-overlay" id="cta">
+    <a class="cta-btn" href="https://github.com/EconLab-AI/Ultrabrain" target="_blank">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+      Star on GitHub
+    </a>
+    <div class="cta-sub">Open Source &middot; Free &middot; npm i ultrabrain</div>
+  </div>
+</div>
+
+<!-- Teleprompter panel -->
+<div class="teleprompter" id="teleprompter">
+  <h3>Voiceover Script</h3>
+  <div id="tpLines"></div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <button class="ctrl-btn" onclick="restart()">Restart</button>
+  <button class="ctrl-btn" id="btnPause" onclick="togglePause()">Pause</button>
+  <button class="ctrl-btn" id="btnTp" onclick="toggleTeleprompter()">Teleprompter</button>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js"}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+
+// ─────────────────────────────────────────
+// SUBTITLE SCRIPT - Edit your lines here!
+// Each entry: { t: start_ms, dur: duration_ms, html: "subtitle HTML" }
+// Use <span class="hl"> for purple/cyan highlight
+// Use <span class="hl-pink"> for pink highlight
+// Use <span class="hl-cyan"> for cyan highlight
+// ─────────────────────────────────────────
+const SCRIPT = [
+  // --- HOOK (0-4s) ---
+  {
+    t: 500, dur: 2200,
+    html: `<span class="sub-line">Your AI has <span class="hl-pink">amnesia.</span></span>`,
+    voice: "Your AI has amnesia."
+  },
+  {
+    t: 3000, dur: 2200,
+    html: `<span class="sub-line">Every session starts from <span class="hl">zero.</span></span>`,
+    voice: "Every single session starts from zero."
+  },
+
+  // --- PROBLEM (5-9s) ---
+  {
+    t: 5500, dur: 2500,
+    html: `<span class="sub-line">It forgets your <span class="hl-cyan">architecture.</span></span>`,
+    voice: "It forgets your architecture."
+  },
+  {
+    t: 8300, dur: 2200,
+    html: `<span class="sub-line">Your bugs. Your <span class="hl-pink">decisions.</span></span>`,
+    voice: "Your bugs. Your decisions."
+  },
+
+  // --- TURN (10-13s) ---
+  {
+    t: 11000, dur: 2500,
+    html: `<span class="sub-line">So we gave it a <span class="hl">brain.</span></span>`,
+    voice: "So we gave it a brain."
+  },
+
+  // --- PRODUCT REVEAL (14-17s) ---
+  {
+    t: 14000, dur: 2800,
+    html: `<span class="sub-line"><span class="hl">UltraBrain.</span><br/>Persistent memory for Claude.</span>`,
+    voice: "UltraBrain. Persistent semantic memory for Claude."
+  },
+
+  // --- STATS (18-26s) ---
+  {
+    t: 17500, dur: 2200,
+    html: `<span class="stat-impact pop">&lt;1.3ms</span><span class="stat-label">search latency</span>`,
+    voice: "Sub 1.3 millisecond search."
+  },
+  {
+    t: 20000, dur: 2200,
+    html: `<span class="stat-impact pop">80%</span><span class="stat-label">token savings</span>`,
+    voice: "80 percent token savings."
+  },
+  {
+    t: 22500, dur: 2200,
+    html: `<span class="stat-impact pop">&lt;2 min</span><span class="stat-label">setup time</span>`,
+    voice: "Less than 2 minutes to set up."
+  },
+
+  // --- HOW (25-29s) ---
+  {
+    t: 25200, dur: 3200,
+    html: `<span class="sub-line">It <span class="hl-cyan">watches</span> what you build.<br/>And <span class="hl">remembers</span> everything.</span>`,
+    voice: "It watches what you build. And remembers everything."
+  },
+
+  // --- INSTALL (29-33s) ---
+  {
+    t: 28800, dur: 3500,
+    html: `<div class="terminal-sub"><span class="prompt">$ </span>claude plugin install ultrabrain<span class="cursor"></span></div>`,
+    voice: "One command to install."
+  },
+
+  // --- CTA (33-37s) ---
+  {
+    t: 32800, dur: 2500,
+    html: `<span class="sub-line"><span class="hl">Open source.</span> Free. <span class="hl-cyan">Now.</span></span>`,
+    voice: "Open source. Free. Right now."
+  },
+
+  // --- FINAL (36s+) ---
+  {
+    t: 35500, dur: 4000,
+    html: `<span class="sub-line">Give your AI a <span class="hl">brain.</span></span>`,
+    voice: "Give your AI a brain."
+  },
+];
+
+const TOTAL_DURATION = 40000; // 40 seconds total
+
+// ─── RENDERER ───
+const frame = document.getElementById('frame');
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+
+function resize() {
+  const w = frame.clientWidth;
+  const h = frame.clientHeight;
+  renderer.setSize(w, h);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x050508);
+scene.fog = new THREE.FogExp2(0x050508, 0.04);
+
+const camera = new THREE.PerspectiveCamera(50, 9/16, 0.1, 100);
+camera.position.set(0, 0, 8);
+
+// ─── LIGHTS ───
+scene.add(new THREE.AmbientLight(0x222244, 0.3));
+const keyLight = new THREE.DirectionalLight(0x7c6aff, 0.8);
+keyLight.position.set(4, 4, 6);
+scene.add(keyLight);
+const fillLight = new THREE.DirectionalLight(0x00e5ff, 0.4);
+fillLight.position.set(-4, -2, 4);
+scene.add(fillLight);
+const rimLight = new THREE.PointLight(0xff3d71, 0.5, 20);
+rimLight.position.set(0, 4, -4);
+scene.add(rimLight);
+
+// ─── BRAIN ───
+const brainGroup = new THREE.Group();
+const BRAIN_R = 2.2;
+
+function makeHemi(side) {
+  const isLeft = side === 'left';
+  const geo = new THREE.SphereGeometry(BRAIN_R, 64, 48,
+    isLeft ? Math.PI/2 : 0, Math.PI, 0, Math.PI);
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    let x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    const f = Math.sin(y*5)*0.07 + Math.sin(y*2.5+x*1.8)*0.05
+            + Math.cos(z*3.5+y*1.5)*0.04 + Math.sin(x*4+z*2)*0.025;
+    const r = Math.sqrt(x*x+y*y+z*z);
+    if(r>0){const s=1+f/r; pos.setXYZ(i,x*s,y*s,z*s);}
+  }
+  geo.computeVertexNormals();
+  const mat = new THREE.MeshStandardMaterial({
+    color:0xc8c0f0, roughness:0.55, metalness:0.2,
+    transparent:true, opacity:0, side:THREE.DoubleSide
+  });
+  const m = new THREE.Mesh(geo, mat);
+  m.position.x = isLeft ? -0.12 : 0.12;
+  return m;
+}
+const leftH = makeHemi('left'), rightH = makeHemi('right');
+brainGroup.add(leftH, rightH);
+scene.add(brainGroup);
+
+// ─── NODES ───
+const NODE_N = 60;
+const nodePos = [], nodeMeshes = [];
+const nodeGrp = new THREE.Group();
+for(let i=0;i<NODE_N;i++){
+  const phi = Math.acos(1-2*(i+0.5)/NODE_N);
+  const theta = Math.PI*(1+Math.sqrt(5))*(i+0.5);
+  const r = BRAIN_R*(0.88+Math.random()*0.25);
+  const v = new THREE.Vector3(
+    r*Math.sin(phi)*Math.cos(theta),
+    r*Math.sin(phi)*Math.sin(theta),
+    r*Math.cos(phi)
+  );
+  nodePos.push(v);
+  const sz = 0.03+Math.random()*0.04;
+  const mat = new THREE.MeshStandardMaterial({
+    color:0xffffff,
+    emissive: i%3===0?0x7c6aff:i%3===1?0x00e5ff:0xff3d71,
+    emissiveIntensity:0, transparent:true, opacity:0
+  });
+  const m = new THREE.Mesh(new THREE.SphereGeometry(sz,8,8), mat);
+  m.position.copy(v);
+  m.userData = { phase: Math.random()*Math.PI*2 };
+  nodeMeshes.push(m);
+  nodeGrp.add(m);
+}
+scene.add(nodeGrp);
+
+// ─── CONNECTIONS ───
+const connLines = [];
+const connGrp = new THREE.Group();
+for(let i=0;i<100;i++){
+  const a=Math.floor(Math.random()*NODE_N);
+  let b=Math.floor(Math.random()*NODE_N);
+  while(b===a) b=Math.floor(Math.random()*NODE_N);
+  if(nodePos[a].distanceTo(nodePos[b])>BRAIN_R*1.2){i--;continue;}
+  const mid = new THREE.Vector3().addVectors(nodePos[a],nodePos[b]).multiplyScalar(0.35);
+  const curve = new THREE.QuadraticBezierCurve3(nodePos[a],mid,nodePos[b]);
+  const geo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(16));
+  const mat = new THREE.LineBasicMaterial({
+    color:i%2===0?0x7c6aff:0x00e5ff, transparent:true, opacity:0
+  });
+  const line = new THREE.Line(geo, mat);
+  line.userData = { phase: Math.random()*Math.PI*2 };
+  connLines.push(line);
+  connGrp.add(line);
+}
+scene.add(connGrp);
+
+// ─── PARTICLES ───
+const P_COUNT = 1800;
+const pGeo = new THREE.BufferGeometry();
+const pPos = new Float32Array(P_COUNT*3);
+const pSpd = new Float32Array(P_COUNT);
+for(let i=0;i<P_COUNT;i++){
+  const th=Math.random()*Math.PI*2, ph=Math.acos(2*Math.random()-1);
+  const r=BRAIN_R*(1.3+Math.random()*2.5);
+  pPos[i*3]=r*Math.sin(ph)*Math.cos(th);
+  pPos[i*3+1]=r*Math.sin(ph)*Math.sin(th);
+  pPos[i*3+2]=r*Math.cos(ph);
+  pSpd[i]=0.2+Math.random()*0.8;
+}
+pGeo.setAttribute('position',new THREE.BufferAttribute(pPos,3));
+const pMat = new THREE.PointsMaterial({
+  color:0x7c6aff, size:0.025, transparent:true, opacity:0,
+  blending:THREE.AdditiveBlending, sizeAttenuation:true
+});
+const particles = new THREE.Points(pGeo, pMat);
+scene.add(particles);
+
+// ─── CORE GLOW ───
+const coreMat = new THREE.MeshStandardMaterial({
+  color:0x7c6aff, emissive:0x7c6aff,
+  emissiveIntensity:0, transparent:true, opacity:0
+});
+const core = new THREE.Mesh(new THREE.SphereGeometry(0.3,32,32), coreMat);
+scene.add(core);
+
+// ─── PULSE RINGS ───
+const ringMat = new THREE.MeshBasicMaterial({
+  color:0x00e5ff, transparent:true, opacity:0, side:THREE.DoubleSide
+});
+const ring = new THREE.Mesh(new THREE.RingGeometry(0.4,0.45,64), ringMat);
+scene.add(ring);
+
+// ─── ANIMATION STATE ───
+let startTime = Date.now();
+let paused = false;
+let pauseOffset = 0;
+let currentSubIdx = -1;
+
+const $sub = document.getElementById('subtitle');
+const $progress = document.getElementById('progress');
+const $logo = document.getElementById('logo');
+const $cta = document.getElementById('cta');
+
+// Visual phases based on elapsed time
+function brainPhase(el) {
+  if (el < 10000) return 0;   // dark, only particles hint
+  if (el < 13500) return 1;   // brain starts forming
+  if (el < 17000) return 2;   // brain visible, nodes appear
+  if (el < 25000) return 3;   // full glory, stats
+  return 4;                   // cta
+}
+
+// ─── SUBTITLE ENGINE ───
+function updateSubtitles(elapsed) {
+  let activeIdx = -1;
+  for (let i = SCRIPT.length - 1; i >= 0; i--) {
+    const s = SCRIPT[i];
+    if (elapsed >= s.t && elapsed < s.t + s.dur) {
+      activeIdx = i;
+      break;
+    }
+  }
+
+  if (activeIdx !== currentSubIdx) {
+    if (activeIdx === -1) {
+      $sub.className = 'subtitle exit';
+    } else {
+      // Quick exit then show new
+      $sub.className = 'subtitle exit';
+      setTimeout(() => {
+        $sub.innerHTML = SCRIPT[activeIdx].html;
+        $sub.className = 'subtitle visible';
+      }, activeIdx > currentSubIdx ? 150 : 50);
+    }
+    currentSubIdx = activeIdx;
+
+    // Teleprompter highlight
+    document.querySelectorAll('.tp-line').forEach((el, i) => {
+      el.classList.toggle('active', i === activeIdx);
+    });
+    // Auto-scroll teleprompter
+    if (activeIdx >= 0) {
+      const activeLine = document.querySelectorAll('.tp-line')[activeIdx];
+      if (activeLine) activeLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+}
+
+// ─── TELEPROMPTER ───
+function buildTeleprompter() {
+  const container = document.getElementById('tpLines');
+  SCRIPT.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'tp-line';
+    const sec = (s.t / 1000).toFixed(1);
+    const end = ((s.t + s.dur) / 1000).toFixed(1);
+    div.innerHTML = `<span class="tp-time">${sec}s - ${end}s</span>${s.voice}`;
+    container.appendChild(div);
+  });
+}
+buildTeleprompter();
+
+// ─── CONTROLS ───
+window.restart = function() {
+  startTime = Date.now();
+  pauseOffset = 0;
+  paused = false;
+  currentSubIdx = -1;
+  $sub.className = 'subtitle';
+  $cta.classList.remove('visible');
+  document.getElementById('btnPause').textContent = 'Pause';
+};
+
+window.togglePause = function() {
+  if (paused) {
+    startTime = Date.now() - pauseOffset;
+    paused = false;
+    document.getElementById('btnPause').textContent = 'Pause';
+  } else {
+    pauseOffset = Date.now() - startTime;
+    paused = true;
+    document.getElementById('btnPause').textContent = 'Play';
+  }
+};
+
+window.toggleTeleprompter = function() {
+  const tp = document.getElementById('teleprompter');
+  const btn = document.getElementById('btnTp');
+  tp.classList.toggle('active');
+  btn.classList.toggle('active');
+};
+
+// ─── RENDER LOOP ───
+resize();
+window.addEventListener('resize', resize);
+
+function animate() {
+  requestAnimationFrame(animate);
+  if (paused) { renderer.render(scene, camera); return; }
+
+  const elapsed = Date.now() - startTime;
+  const t = elapsed * 0.001;
+  const bp = brainPhase(elapsed);
+
+  // Progress bar
+  const pct = Math.min(100, (elapsed / TOTAL_DURATION) * 100);
+  $progress.style.width = pct + '%';
+
+  // Subtitles
+  updateSubtitles(elapsed);
+
+  // Logo - show after 13s
+  if (elapsed > 13500) $logo.classList.add('visible');
+
+  // CTA - show at end
+  if (elapsed > 33000) $cta.classList.add('visible');
+
+  // ─── BRAIN ANIMATION ───
+  // Opacity
+  const brainOp = bp >= 2 ? Math.min(0.88, (elapsed-13500)/2000*0.88) :
+                  bp >= 1 ? Math.min(0.2, (elapsed-10000)/2000*0.2) : 0;
+  leftH.material.opacity = brainOp;
+  rightH.material.opacity = brainOp * 0.82;
+
+  // Rotation
+  const rotSpd = bp >= 2 ? 0.18 : bp >= 1 ? 0.08 : 0.03;
+  brainGroup.rotation.y += rotSpd * 0.016;
+  brainGroup.rotation.x = Math.sin(t * 0.25) * 0.12;
+
+  // Nodes
+  const nodeOp = bp >= 2 ? Math.min(1, (elapsed-13500)/1200) : 0;
+  nodeMeshes.forEach(m => {
+    m.material.opacity = nodeOp * (0.5 + Math.sin(t*2+m.userData.phase)*0.5);
+    m.material.emissiveIntensity = nodeOp * (0.4 + Math.sin(t*3+m.userData.phase)*0.6);
+    const a = rotSpd * 0.016;
+    const x = m.position.x, z = m.position.z;
+    m.position.x = x*Math.cos(a) - z*Math.sin(a);
+    m.position.z = x*Math.sin(a) + z*Math.cos(a);
+  });
+
+  // Connections
+  const connOp = bp >= 2 ? Math.min(1, (elapsed-14000)/2000) : 0;
+  connLines.forEach(l => {
+    l.material.opacity = connOp * (0.06 + Math.sin(t*1.5+l.userData.phase)*0.14);
+  });
+  connGrp.rotation.y = brainGroup.rotation.y;
+  connGrp.rotation.x = brainGroup.rotation.x;
+
+  // Particles
+  const ppOp = bp >= 1 ? Math.min(0.5, (elapsed-10000)/3000*0.5) :
+               elapsed > 3000 ? Math.min(0.15, (elapsed-3000)/3000*0.15) : 0;
+  pMat.opacity = ppOp;
+  const pa = particles.geometry.attributes.position.array;
+  for(let i=0;i<P_COUNT;i++){
+    const s=pSpd[i], a=s*0.003;
+    const x=pa[i*3], z=pa[i*3+2];
+    pa[i*3]=x*Math.cos(a)-z*Math.sin(a);
+    pa[i*3+2]=x*Math.sin(a)+z*Math.cos(a);
+    pa[i*3+1]+=Math.sin(t*s+i)*0.001;
+  }
+  // Pull particles inward during brain reveal
+  if(bp>=2){
+    for(let i=0;i<P_COUNT;i++){
+      const x=pa[i*3],y=pa[i*3+1],z=pa[i*3+2];
+      const d=Math.sqrt(x*x+y*y+z*z);
+      if(d>BRAIN_R*1.0){
+        const pull=0.003*pSpd[i];
+        pa[i*3]-=(x/d)*pull;pa[i*3+1]-=(y/d)*pull;pa[i*3+2]-=(z/d)*pull;
+      }
+    }
+  }
+  particles.geometry.attributes.position.needsUpdate=true;
+
+  // Core
+  const coreI = bp >= 2 ? Math.min(1, (elapsed-13500)/800) : 0;
+  coreMat.opacity = coreI * 0.5;
+  coreMat.emissiveIntensity = coreI * (1.5 + Math.sin(t*2)*0.5);
+
+  // Pulse ring
+  if(bp>=2){
+    const pt=((elapsed-13500)%2500)/2500;
+    ring.scale.setScalar(1+pt*6);
+    ringMat.opacity=(1-pt)*0.25*coreI;
+    ring.lookAt(camera.position);
+  }
+
+  // Camera movement
+  if(bp<1){
+    camera.position.z = 8;
+    camera.position.x = Math.sin(t*0.15)*0.2;
+    camera.position.y = Math.cos(t*0.12)*0.15;
+  } else if(bp===1){
+    camera.position.z = Math.max(6, 8-(elapsed-10000)*0.001);
+  } else {
+    camera.position.z = Math.max(5, 6-(elapsed-13500)*0.0003);
+    camera.position.x = Math.sin(t*0.2)*0.4;
+    camera.position.y = Math.cos(t*0.15)*0.25;
+  }
+  camera.lookAt(0,0,0);
+
+  // Lights
+  keyLight.intensity = 0.8 + Math.sin(t*1.5)*0.2;
+
+  renderer.render(scene, camera);
+}
+
+animate();
+</script>
+
+</body>
+</html>
