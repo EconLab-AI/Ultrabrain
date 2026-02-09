@@ -209,7 +209,7 @@ Imported sessions appear in the viewer under the **Claude Desktop** tab with ful
 UltraBrain runs silently in the background through **5 lifecycle hooks**:
 
 ```
-SessionStart → UserPromptSubmit → PostToolUse → Stop → SessionEnd
+SessionStart → UserPromptSubmit → PostToolUse → Stop (Summary) → SessionEnd
 ```
 
 **Every session:**

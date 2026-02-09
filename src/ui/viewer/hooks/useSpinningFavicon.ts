@@ -22,7 +22,7 @@ export function useSpinningFavicon(isProcessing: boolean) {
     // Load image once (SVG brain logo as data URI)
     if (!imageRef.current) {
       imageRef.current = new Image();
-      imageRef.current.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%232563EB'/%3E%3Cstop offset='100%25' stop-color='%237C3AED'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M93 20C58 20 16 52 16 100s42 80 77 80Z' fill='url(%23g)' opacity='.95'/%3E%3Cpath d='M107 20c35 0 77 32 77 80s-42 80-77 80Z' fill='url(%23g)' opacity='.88'/%3E%3Ccircle cx='100' cy='100' r='6' fill='white' opacity='.9'/%3E%3C/svg%3E";
+      imageRef.current.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M14.8 3.8C10 3.8 3.5 8.2 3.5 16s6.5 12.2 11.3 12.2Z' fill='%23fff' opacity='.95'/%3E%3Cpath d='M17.2 3.8C22 3.8 28.5 8.2 28.5 16s-6.5 12.2-11.3 12.2Z' fill='%23fff' opacity='.85'/%3E%3Cpath d='M5 9.7q3.6 1.2 9 .4M4.5 16q3.6 1.4 9 .5M5 22.3q3.6 1.1 9 .3M27 9.7q-3.6 1.2-9 .4M27.5 16q-3.6 1.4-9 .5M27 22.3q-3.6 1.1-9 .3' fill='none' stroke='%23000' stroke-width='.4' opacity='.1'/%3E%3Ccircle cx='9' cy='9' r='.9' fill='%23fff' opacity='.5'/%3E%3Ccircle cx='23' cy='9' r='.9' fill='%23fff' opacity='.5'/%3E%3Ccircle cx='16' cy='16' r='1.2' fill='%23fff'/%3E%3C/svg%3E";
     }
 
     // Store original favicon

@@ -4,7 +4,7 @@ UltraBrain is a Claude Code plugin providing persistent semantic memory across s
 
 ## Architecture
 
-**5 Lifecycle Hooks**: SessionStart -> UserPromptSubmit -> PostToolUse -> Summary -> SessionEnd
+**5 Lifecycle Hooks**: SessionStart -> UserPromptSubmit -> PostToolUse -> Stop -> SessionEnd
 
 **Hooks** (`src/hooks/*.ts`) - TypeScript -> ESM, built to `plugin/scripts/*-hook.js`
 

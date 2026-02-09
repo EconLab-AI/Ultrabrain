@@ -32,6 +32,7 @@ export class MigrationRunner {
     this.repairSessionIdColumnRename();
     this.addFailedAtEpochColumn();
     this.createTagsSystem();
+    this.createLoopTables();
     this.ensureTasksObservationIdColumn();
   }
 
@@ -716,6 +717,65 @@ export class MigrationRunner {
     this.db.prepare('INSERT OR IGNORE INTO schema_versions (version, applied_at) VALUES (?, ?)').run(23, new Date().toISOString());
 
     logger.info('DB', 'Created tags system tables and seeded 13 system tags');
+  }
+
+  /**
+   * Create loop_configs and loop_iterations tables for Ralph Loop (migration 24)
+   */
+  private createLoopTables(): void {
+    const applied = this.db.prepare('SELECT version FROM schema_versions WHERE version = ?').get(24) as SchemaVersion | undefined;
+    if (applied) return;
+
+    // Check if tables already exist
+    const loopConfigsExists = this.db.query(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='loop_configs'"
+    ).all() as TableNameRow[];
+    if (loopConfigsExists.length > 0) {
+      this.db.prepare('INSERT OR IGNORE INTO schema_versions (version, applied_at) VALUES (?, ?)').run(24, new Date().toISOString());
+      return;
+    }
+
+    logger.debug('DB', 'Creating loop_configs and loop_iterations tables');
+
+    this.db.run(`
+      CREATE TABLE IF NOT EXISTS loop_configs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project TEXT NOT NULL UNIQUE,
+        enabled INTEGER DEFAULT 0,
+        mode TEXT DEFAULT 'adaptive',
+        max_iterations INTEGER DEFAULT 10,
+        task_description TEXT,
+        success_criteria TEXT,
+        completion_promises TEXT,
+        promise_logic TEXT DEFAULT 'any',
+        iteration_context_tokens INTEGER DEFAULT 500,
+        auto_compact_threshold REAL DEFAULT 0.8,
+        created_at_epoch INTEGER NOT NULL,
+        updated_at_epoch INTEGER NOT NULL
+      )
+    `);
+
+    this.db.run(`
+      CREATE TABLE IF NOT EXISTS loop_iterations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        loop_config_id INTEGER NOT NULL REFERENCES loop_configs(id),
+        iteration_number INTEGER NOT NULL,
+        session_id TEXT,
+        mode_used TEXT,
+        status TEXT DEFAULT 'pending',
+        context_injected TEXT,
+        observations_count INTEGER DEFAULT 0,
+        key_findings TEXT,
+        started_at_epoch INTEGER,
+        completed_at_epoch INTEGER
+      )
+    `);
+
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_loop_iterations_config ON loop_iterations(loop_config_id)');
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_loop_iterations_status ON loop_iterations(status)');
+
+    this.db.prepare('INSERT OR IGNORE INTO schema_versions (version, applied_at) VALUES (?, ?)').run(24, new Date().toISOString());
+    logger.info('DB', 'Created loop_configs and loop_iterations tables');
   }
 
   /**
