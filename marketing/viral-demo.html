@@ -89,18 +89,19 @@ canvas#scene{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1}
 
 /* Stats counter */
 .stats-row{
-  display:flex;gap:clamp(20px,5vw,60px);justify-content:center;
+  display:flex;gap:clamp(20px,5vw,60px);justify-content:center;align-items:flex-start;
   margin-top:40px;opacity:0;transform:translateY(20px);
   transition:all 0.6s ease 0.3s;
 }
 .stats-row.visible{opacity:1;transform:translateY(0)}
-.stat{text-align:center}
+.stat{text-align:center;min-width:clamp(100px,12vw,180px)}
 .stat-value{
   font-size:clamp(1.8rem,4vw,3.2rem);font-weight:800;
   font-family:'JetBrains Mono',monospace;
   background:linear-gradient(135deg,var(--glow-secondary),var(--glow-primary));
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
   background-clip:text;
+  line-height:1.2;
 }
 .stat-label{
   font-size:clamp(0.6rem,1.2vw,0.85rem);
@@ -189,22 +190,38 @@ canvas#scene{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1}
   color:var(--glow-secondary);
 }
 
-/* Logo */
-.logo{
-  position:fixed;top:20px;left:20px;z-index:20;
-  display:flex;align-items:center;gap:10px;
-  opacity:0;transition:opacity 0.5s;
+/* Logo / Brand header */
+.brand-header{
+  position:fixed;top:0;left:0;width:100%;z-index:20;
+  display:flex;flex-direction:column;align-items:center;
+  padding-top:20px;
+  opacity:0;transition:opacity 0.8s ease;
 }
-.logo.visible{opacity:1}
-.logo-icon{
-  width:32px;height:32px;
-  background:linear-gradient(135deg,var(--glow-primary),var(--glow-secondary));
-  border-radius:8px;display:flex;align-items:center;justify-content:center;
+.brand-header.visible{opacity:1}
+.econlab-row{
+  display:flex;align-items:center;gap:6px;
+  margin-bottom:8px;opacity:0.6;
 }
-.logo-icon svg{width:20px;height:20px}
-.logo-text{
-  font-weight:700;font-size:1rem;
-  letter-spacing:-0.02em;
+.econlab-row img{height:18px;width:auto}
+.brand-row{
+  display:flex;align-items:center;gap:12px;
+}
+.brand-brain-icon{width:44px;height:44px}
+.brand-wordmark{display:flex;align-items:baseline;gap:0}
+.brand-wordmark .ultra{
+  font-size:1.6rem;font-weight:200;letter-spacing:0.15em;
+  color:#F9FAFB;
+}
+.brand-wordmark .brain{
+  font-size:1.6rem;font-weight:700;letter-spacing:0.15em;
+  color:#F9FAFB;
+}
+.brand-slogan{
+  margin-top:6px;
+  font-size:0.7rem;font-weight:400;letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:var(--text-dim);
+  font-family:'JetBrains Mono',monospace;
 }
 
 /* Replay button */
@@ -237,17 +254,54 @@ canvas#scene{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1}
   <div class="cine-bar top" id="cineTop"></div>
   <div class="cine-bar bottom" id="cineBottom"></div>
 
-  <!-- Logo -->
-  <div class="logo" id="logo">
-    <div class="logo-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
-        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/>
-        <path d="M12 2c-2 3-3 6-3 10s1 7 3 10"/>
-        <path d="M12 2c2 3 3 6 3 10s-1 7-3 10"/>
-        <path d="M2 12h20"/>
-      </svg>
+  <!-- Brand Header -->
+  <div class="brand-header" id="brandHeader">
+    <!-- EconLab logo -->
+    <div class="econlab-row">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA1UAAADVCAYAAAC/p9qDAAAACXBIWXMAAAsTAAALEwEAmpwYAAAoQ0lEQVR4nO3dd7htZXXv8d+gKaCABQsoggoCmsQaG5aIIoq9IYoQrLHhFQVFwFgAIxHsUbDEjiYWrOg1xhv1xhZbwHDFiAUBFUGkt3O+94+5TjzAKXPvtdZ819r7+3me8zx6mGeNMd8199rvWPOd4y0gkiRJkqTF2aB1ApIkSZI0zyyqJEmSJGkMFlWSJEmSNAaLKkmSJEkag0WVJEmSJI3BokqSJEmSxmBRJUmSJEljsKiSJEmSpDFYVEmSJEnSGCyqJEmSJGkMFlWSJEmSNAaLKkmSJEkag0WVJEmSJI3BokqSJEmSxmBRJUmSJEljsKiSJEmSpDFYVEmSJEnSGCyqJEmSJGkMFlWSJEmSNAaLKkmSJEkag0WVJEmSJI3BokqSJEmSxmBRJUmSJEljsKiSJEmSpDFYVEmSJEnSGCyqJEmSJGkMFlWSJEmSNAaLKkmSJEkag0WVJEmSJI3BokqSJEmSxmBRJUmSJEljsKiSJEmSpDFYVEmSJEnSGCyqJEmSJGkMFlWSJEmSNAaLKkmSJEkag0WVJEmSJI3BokqSJEmSxmBRJUmSJEljsKiSJEmSpDFYVEmSJEnSGCyqJEmSJGkMFlWSJEmSNIb/D6jWiP2F/uYAAAAASUVORK5CYII=" alt="EconLab AI"/>
     </div>
-    <span class="logo-text">UltraBrain</span>
+    <!-- UltraBrain logo -->
+    <div class="brand-row">
+      <svg class="brand-brain-icon" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="ub-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#3B82F6"/>
+            <stop offset="45%" stop-color="#6366F1"/>
+            <stop offset="100%" stop-color="#8B5CF6"/>
+          </linearGradient>
+          <linearGradient id="ub-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#93C5FD"/>
+            <stop offset="100%" stop-color="#C4B5FD"/>
+          </linearGradient>
+        </defs>
+        <path d="M 93 20 C 58 20, 16 52, 16 100 C 16 148, 58 180, 93 180 Z" fill="url(#ub-bg)" opacity="0.95"/>
+        <path d="M 107 20 C 142 20, 184 52, 184 100 C 184 148, 142 180, 107 180 Z" fill="url(#ub-bg)" opacity="0.88"/>
+        <path d="M 30 62 Q 54 73, 87 66" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+        <path d="M 26 100 Q 50 113, 87 104" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+        <path d="M 30 138 Q 54 148, 87 142" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+        <path d="M 170 62 Q 146 73, 113 66" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+        <path d="M 174 100 Q 150 113, 113 104" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+        <path d="M 170 138 Q 146 148, 113 142" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+        <line x1="54" y1="54" x2="100" y2="100" stroke="white" stroke-width="1.3" opacity="0.22"/>
+        <line x1="146" y1="54" x2="100" y2="100" stroke="white" stroke-width="1.3" opacity="0.22"/>
+        <line x1="46" y1="100" x2="100" y2="100" stroke="white" stroke-width="1.3" opacity="0.22"/>
+        <line x1="154" y1="100" x2="100" y2="100" stroke="white" stroke-width="1.3" opacity="0.22"/>
+        <line x1="54" y1="146" x2="100" y2="100" stroke="white" stroke-width="1.3" opacity="0.18"/>
+        <line x1="146" y1="146" x2="100" y2="100" stroke="white" stroke-width="1.3" opacity="0.18"/>
+        <circle cx="54" cy="54" r="5" fill="url(#ub-glow)" opacity="0.90"/>
+        <circle cx="146" cy="54" r="5" fill="url(#ub-glow)" opacity="0.90"/>
+        <circle cx="46" cy="100" r="4" fill="url(#ub-glow)" opacity="0.80"/>
+        <circle cx="154" cy="100" r="4" fill="url(#ub-glow)" opacity="0.80"/>
+        <circle cx="54" cy="146" r="4" fill="url(#ub-glow)" opacity="0.75"/>
+        <circle cx="146" cy="146" r="4" fill="url(#ub-glow)" opacity="0.75"/>
+        <circle cx="100" cy="100" r="6.5" fill="white" opacity="0.95"/>
+        <circle cx="100" cy="100" r="4" fill="url(#ub-bg)" opacity="0.5"/>
+      </svg>
+      <div class="brand-wordmark">
+        <span class="ultra">ULTRA</span><span class="brain">BRAIN</span>
+      </div>
+    </div>
+    <div class="brand-slogan">Persistent Semantic Memory</div>
   </div>
 
   <!-- Memory counter -->
@@ -561,7 +615,7 @@ const $terminal = document.getElementById('terminal');
 const $termCmd = document.getElementById('termCmd');
 const $memCounter = document.getElementById('memCounter');
 const $memCount = document.getElementById('memCount');
-const $logo = document.getElementById('logo');
+const $logo = document.getElementById('brandHeader');
 const $cineTop = document.getElementById('cineTop');
 const $cineBottom = document.getElementById('cineBottom');
 const $replay = document.getElementById('replayBtn');

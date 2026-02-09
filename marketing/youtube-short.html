@@ -146,21 +146,40 @@ canvas#scene{position:absolute;top:0;left:0;width:100%;height:100%}
 }
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 
-/* Logo watermark */
-.logo-mark{
-  position:absolute;top:5%;left:50%;transform:translateX(-50%);
+/* Brand header */
+.brand-header{
+  position:absolute;top:3%;left:50%;transform:translateX(-50%);
   z-index:40;
+  display:flex;flex-direction:column;align-items:center;
+  opacity:0;transition:opacity 0.8s ease;
+  width:90%;
+}
+.brand-header.visible{opacity:1}
+.econlab-row{
+  display:flex;align-items:center;gap:6px;
+  margin-bottom:6px;opacity:0.6;
+}
+.econlab-row img{height:14px;width:auto}
+.brand-row{
   display:flex;align-items:center;gap:8px;
-  opacity:0;transition:opacity 0.5s;
 }
-.logo-mark.visible{opacity:1}
-.logo-mark .icon{
-  width:28px;height:28px;
-  background:linear-gradient(135deg,var(--glow-purple),var(--glow-cyan));
-  border-radius:7px;display:flex;align-items:center;justify-content:center;
+.brand-brain-icon{width:32px;height:32px}
+.brand-wordmark{display:flex;align-items:baseline;gap:0}
+.brand-wordmark .ultra{
+  font-size:1.1rem;font-weight:200;letter-spacing:0.12em;
+  color:#F9FAFB;
 }
-.logo-mark .icon svg{width:18px;height:18px}
-.logo-mark .name{font-weight:700;font-size:0.95rem;letter-spacing:-0.01em}
+.brand-wordmark .brain{
+  font-size:1.1rem;font-weight:700;letter-spacing:0.12em;
+  color:#F9FAFB;
+}
+.brand-slogan{
+  margin-top:4px;
+  font-size:0.5rem;font-weight:400;letter-spacing:0.18em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,0.35);
+  font-family:'JetBrains Mono',monospace;
+}
 
 /* CTA overlay */
 .cta-overlay{
@@ -253,17 +272,52 @@ canvas#scene{position:absolute;top:0;left:0;width:100%;height:100%}
   <canvas id="scene"></canvas>
   <div class="progress" id="progress"></div>
 
-  <!-- Logo -->
-  <div class="logo-mark" id="logo">
-    <div class="icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M12 2c-2 3-3 6-3 10s1 7 3 10"/>
-        <path d="M12 2c2 3 3 6 3 10s-1 7-3 10"/>
-        <path d="M2 12h20"/>
-      </svg>
+  <!-- Brand Header -->
+  <div class="brand-header" id="logo">
+    <div class="econlab-row">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA1UAAADVCAYAAAC/p9qDAAAACXBIWXMAAAsTAAALEwEAmpwYAAAoQ0lEQVR4nO3dd7htZXXv8d+gKaCABQsoggoCmsQaG5aIIoq9IYoQrLHhFQVFwFgAIxHsUbDEjiYWrOg1xhv1xhZbwHDFiAUBFUGkt3O+94+5TjzAKXPvtdZ819r7+3me8zx6mGeNMd8199rvWPOd4y0gkiRJkqTF2aB1ApIkSZI0zyyqJEmSJGkMFlWSJEmSNAaLKkmSJEkag0WVJEmSJI3BokqSJEmSxmBRJUmSJEljsKiSJEmSpDFYVEmSJEnSGCyqJEmSJGkMFlWSJEmSNAaLKkmSJEkag0WVJEmSJI3BokqSJEmSxmBRJUmSJEljsKiSJEmSpDFYVEmSJEnSGCyqJEmSJGkMFlWSJEmSNAaLKkmSJEkag0WVJEmSJI3BokqSJEmSxmBRJUmSJEljsKiSJEmSpDFYVEmSJEnSGCyqJEmSJGkMFlWSJEmSNAaLKkmSJEkag0WVJEmSJI3BokqSJEmSxmBRJUmSJEljsKiSJEmSpDFYVEmSJEnSGCyqJEmSJGkMFlWSJEmSNAaLKkmSJEkag0WVJEmSJI3BokqSJEmSxmBRJUmSJEljsKiSJEmSpDFYVEmSJEnSGCyqJEmSJGkMFlWSJEmSNIb/D6jWiP2F/uYAAAAASUVORK5CYII=" alt="EconLab AI"/>
     </div>
-    <span class="name">UltraBrain</span>
+    <div class="brand-row">
+      <svg class="brand-brain-icon" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="ub-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#3B82F6"/>
+            <stop offset="45%" stop-color="#6366F1"/>
+            <stop offset="100%" stop-color="#8B5CF6"/>
+          </linearGradient>
+          <linearGradient id="ub-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#93C5FD"/>
+            <stop offset="100%" stop-color="#C4B5FD"/>
+          </linearGradient>
+        </defs>
+        <path d="M 93 20 C 58 20, 16 52, 16 100 C 16 148, 58 180, 93 180 Z" fill="url(#ub-bg)" opacity="0.95"/>
+        <path d="M 107 20 C 142 20, 184 52, 184 100 C 184 148, 142 180, 107 180 Z" fill="url(#ub-bg)" opacity="0.88"/>
+        <path d="M 30 62 Q 54 73, 87 66" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+        <path d="M 26 100 Q 50 113, 87 104" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+        <path d="M 30 138 Q 54 148, 87 142" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+        <path d="M 170 62 Q 146 73, 113 66" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+        <path d="M 174 100 Q 150 113, 113 104" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+        <path d="M 170 138 Q 146 148, 113 142" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+        <line x1="54" y1="54" x2="100" y2="100" stroke="white" stroke-width="1.3" opacity="0.22"/>
+        <line x1="146" y1="54" x2="100" y2="100" stroke="white" stroke-width="1.3" opacity="0.22"/>
+        <line x1="46" y1="100" x2="100" y2="100" stroke="white" stroke-width="1.3" opacity="0.22"/>
+        <line x1="154" y1="100" x2="100" y2="100" stroke="white" stroke-width="1.3" opacity="0.22"/>
+        <line x1="54" y1="146" x2="100" y2="100" stroke="white" stroke-width="1.3" opacity="0.18"/>
+        <line x1="146" y1="146" x2="100" y2="100" stroke="white" stroke-width="1.3" opacity="0.18"/>
+        <circle cx="54" cy="54" r="5" fill="url(#ub-glow)" opacity="0.90"/>
+        <circle cx="146" cy="54" r="5" fill="url(#ub-glow)" opacity="0.90"/>
+        <circle cx="46" cy="100" r="4" fill="url(#ub-glow)" opacity="0.80"/>
+        <circle cx="154" cy="100" r="4" fill="url(#ub-glow)" opacity="0.80"/>
+        <circle cx="54" cy="146" r="4" fill="url(#ub-glow)" opacity="0.75"/>
+        <circle cx="146" cy="146" r="4" fill="url(#ub-glow)" opacity="0.75"/>
+        <circle cx="100" cy="100" r="6.5" fill="white" opacity="0.95"/>
+        <circle cx="100" cy="100" r="4" fill="url(#ub-bg)" opacity="0.5"/>
+      </svg>
+      <div class="brand-wordmark">
+        <span class="ultra">ULTRA</span><span class="brain">BRAIN</span>
+      </div>
+    </div>
+    <div class="brand-slogan">Persistent Semantic Memory</div>
   </div>
 
   <!-- Subtitle area -->
