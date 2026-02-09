@@ -117,6 +117,18 @@ export class Server {
   }
 
   /**
+   * Attach a WebSocket upgrade handler for a specific path
+   */
+  attachUpgradeHandler(path: string, handler: (req: any, socket: any, head: any) => void): void {
+    if (!this.server) throw new Error('Server not started');
+    this.server.on('upgrade', (req: any, socket: any, head: any) => {
+      if (req.url?.startsWith(path)) {
+        handler(req, socket, head);
+      }
+    });
+  }
+
+  /**
    * Finalize route setup by adding error handlers
    * Call this after all routes have been registered
    */

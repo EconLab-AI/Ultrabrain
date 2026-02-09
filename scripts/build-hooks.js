@@ -91,13 +91,15 @@ async function buildHooks() {
       format: 'cjs',
       outfile: `${hooksDir}/${WORKER_SERVICE.name}.cjs`,
       minify: true,
-      logLevel: 'error', // Suppress warnings (import.meta warning is benign)
+      logLevel: 'error',
       external: [
         'bun:sqlite',
         '@lancedb/lancedb',
         '@xenova/transformers',
         'onnxruntime-node',
         'sharp',
+        'node-pty',
+        'ws',
       ],
       define: {
         '__DEFAULT_PACKAGE_VERSION__': `"${version}"`
@@ -129,6 +131,8 @@ async function buildHooks() {
         '@xenova/transformers',
         'onnxruntime-node',
         'sharp',
+        'node-pty',
+        'ws',
       ],
       define: {
         '__DEFAULT_PACKAGE_VERSION__': `"${version}"`
@@ -160,6 +164,8 @@ async function buildHooks() {
         '@xenova/transformers',
         'onnxruntime-node',
         'sharp',
+        'node-pty',
+        'ws',
       ],
       define: {
         '__DEFAULT_PACKAGE_VERSION__': `"${version}"`

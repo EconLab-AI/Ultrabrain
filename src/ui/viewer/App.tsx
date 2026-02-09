@@ -17,6 +17,10 @@ import { CurrentStateView } from './components/pm/CurrentStateView';
 import { ClaudeMdManager } from './components/claudemd/ClaudeMdManager';
 import { LoopManager } from './components/loop/LoopManager';
 import { TeamDashboard } from './components/teams/TeamDashboard';
+import { TerminalPanel } from './components/terminal/TerminalPanel';
+import { AnalyticsView } from './components/analytics/AnalyticsView';
+import { AutomationView } from './components/automation/AutomationView';
+import { KnowledgeGraphView } from './components/graph/KnowledgeGraphView';
 import { useSSE } from './hooks/useSSE';
 import { useSettings } from './hooks/useSettings';
 import { useStats } from './hooks/useStats';
@@ -166,6 +170,14 @@ export function App() {
         return <LoopManager currentProject={pmProject} projects={projects} onProjectChange={setPmProject} />;
       case 'teams':
         return <TeamDashboard currentProject={pmProject} projects={projects} onProjectChange={setPmProject} />;
+      case 'terminal':
+        return <TerminalPanel />;
+      case 'automation':
+        return <AutomationView />;
+      case 'analytics':
+        return <AnalyticsView currentProject={pmProject} projects={projects} onProjectChange={setPmProject} />;
+      case 'graph':
+        return <KnowledgeGraphView currentProject={pmProject} projects={projects} onProjectChange={setPmProject} />;
       case 'feed':
       default:
         return (

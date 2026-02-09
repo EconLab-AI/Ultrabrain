@@ -115,6 +115,14 @@ import { CurrentStateRoutes } from './worker/http/routes/CurrentStateRoutes.js';
 import { ClaudeMdRoutes } from './worker/http/routes/ClaudeMdRoutes.js';
 import { LoopRoutes } from './worker/http/routes/LoopRoutes.js';
 import { TeamsRoutes } from './worker/http/routes/TeamsRoutes.js';
+import { TerminalRoutes } from './worker/http/routes/TerminalRoutes.js';
+import { AnalyticsRoutes } from './worker/http/routes/AnalyticsRoutes.js';
+import { TerminalManager } from './worker/terminal/TerminalManager.js';
+import { TerminalWebSocket } from './worker/terminal/TerminalWebSocket.js';
+import { AutomationManager } from './worker/automation/AutomationManager.js';
+import { AutomationRoutes } from './worker/http/routes/AutomationRoutes.js';
+import { RecordingRoutes } from './worker/http/routes/RecordingRoutes.js';
+import { GraphRoutes } from './worker/http/routes/GraphRoutes.js';
 
 // Process management for zombie cleanup (Issue #737)
 import { startOrphanReaper, reapOrphanedProcesses } from './worker/ProcessRegistry.js';
@@ -164,6 +172,13 @@ export class WorkerService {
   private settingsManager: SettingsManager;
   private sessionEventBroadcaster: SessionEventBroadcaster;
 
+  // Terminal
+  private terminalManager: TerminalManager;
+  private terminalWebSocket: TerminalWebSocket | null = null;
+
+  // Automation
+  private automationManager: AutomationManager | null = null;
+
   // Route handlers
   private searchRoutes: SearchRoutes | null = null;
 
@@ -190,6 +205,7 @@ export class WorkerService {
 
     this.paginationHelper = new PaginationHelper(this.dbManager);
     this.settingsManager = new SettingsManager(this.dbManager);
+    this.terminalManager = new TerminalManager();
     this.sessionEventBroadcaster = new SessionEventBroadcaster(this.sseBroadcaster, this);
 
     // Set callback for when sessions are deleted
@@ -293,6 +309,9 @@ export class WorkerService {
     this.server.registerRoutes(new ClaudeMdRoutes(this.dbManager));
     this.server.registerRoutes(new LoopRoutes(this.dbManager));
     this.server.registerRoutes(new TeamsRoutes());
+    this.server.registerRoutes(new TerminalRoutes(this.terminalManager));
+    // AnalyticsRoutes, RecordingRoutes, and GraphRoutes are registered in
+    // initializeBackground() after DB is initialized (they access db in constructor)
   }
 
   /**
@@ -312,6 +331,12 @@ export class WorkerService {
       pid: process.pid,
       port,
       startedAt: new Date().toISOString()
+    });
+
+    // Attach WebSocket handler for terminal
+    this.terminalWebSocket = new TerminalWebSocket(this.terminalManager);
+    this.server.attachUpgradeHandler('/ws/terminal', (req: any, socket: any, head: any) => {
+      this.terminalWebSocket!.handleUpgrade(req, socket, head);
     });
 
     logger.info('SYSTEM', 'Worker started', { host, port, pid: process.pid });
@@ -362,6 +387,18 @@ export class WorkerService {
       this.searchRoutes = new SearchRoutes(searchManager);
       this.server.registerRoutes(this.searchRoutes);
       logger.info('WORKER', 'SearchManager initialized and search routes registered');
+
+      // Register routes that require initialized DB
+      this.server.registerRoutes(new AnalyticsRoutes(this.dbManager));
+      this.server.registerRoutes(new RecordingRoutes(this.dbManager));
+      this.server.registerRoutes(new GraphRoutes(this.dbManager));
+      logger.info('WORKER', 'Analytics, Recording, and Graph routes registered');
+
+      // Initialize automation engine
+      this.automationManager = new AutomationManager(() => this.dbManager.getSessionStore().db);
+      this.server.registerRoutes(new AutomationRoutes(this.automationManager));
+      this.automationManager.init();
+      logger.info('WORKER', 'AutomationManager initialized and routes registered');
 
       // Connect to MCP server
       const mcpServerPath = path.join(__dirname, 'mcp-server.cjs');
@@ -716,11 +753,24 @@ export class WorkerService {
       this.stopOrphanReaper = null;
     }
 
+    // Stop automation scheduler before shutdown
+    if (this.automationManager) {
+      this.automationManager.shutdown();
+      this.automationManager = null;
+    }
+
+    // Close terminal WebSocket before shutdown
+    if (this.terminalWebSocket) {
+      this.terminalWebSocket.close();
+      this.terminalWebSocket = null;
+    }
+
     await performGracefulShutdown({
       server: this.server.getHttpServer(),
       sessionManager: this.sessionManager,
       mcpClient: this.mcpClient,
-      dbManager: this.dbManager
+      dbManager: this.dbManager,
+      terminalManager: this.terminalManager,
     });
   }
 

@@ -19,21 +19,34 @@ export class MigrationRunner {
    * This is the only public method - all migrations are internal
    */
   runAllMigrations(): void {
-    this.initializeSchema();
-    this.ensureWorkerPortColumn();
-    this.ensurePromptTrackingColumns();
-    this.removeSessionSummariesUniqueConstraint();
-    this.addObservationHierarchicalFields();
-    this.makeObservationsTextNullable();
-    this.createUserPromptsTable();
-    this.ensureDiscoveryTokensColumn();
-    this.createPendingMessagesTable();
-    this.renameSessionIdColumns();
-    this.repairSessionIdColumnRename();
-    this.addFailedAtEpochColumn();
-    this.createTagsSystem();
-    this.createLoopTables();
-    this.ensureTasksObservationIdColumn();
+    const migrations: [string, () => void][] = [
+      ['initializeSchema', () => this.initializeSchema()],
+      ['ensureWorkerPortColumn', () => this.ensureWorkerPortColumn()],
+      ['ensurePromptTrackingColumns', () => this.ensurePromptTrackingColumns()],
+      ['removeSessionSummariesUniqueConstraint', () => this.removeSessionSummariesUniqueConstraint()],
+      ['addObservationHierarchicalFields', () => this.addObservationHierarchicalFields()],
+      ['makeObservationsTextNullable', () => this.makeObservationsTextNullable()],
+      ['createUserPromptsTable', () => this.createUserPromptsTable()],
+      ['ensureDiscoveryTokensColumn', () => this.ensureDiscoveryTokensColumn()],
+      ['createPendingMessagesTable', () => this.createPendingMessagesTable()],
+      ['renameSessionIdColumns', () => this.renameSessionIdColumns()],
+      ['repairSessionIdColumnRename', () => this.repairSessionIdColumnRename()],
+      ['addFailedAtEpochColumn', () => this.addFailedAtEpochColumn()],
+      ['createTagsSystem', () => this.createTagsSystem()],
+      ['createLoopTables', () => this.createLoopTables()],
+      ['ensureTasksObservationIdColumn', () => this.ensureTasksObservationIdColumn()],
+      ['createTerminalSessionsTable', () => this.createTerminalSessionsTable()],
+      ['createAutomationTables', () => this.createAutomationTables()],
+      ['createTerminalRecordingsTable', () => this.createTerminalRecordingsTable()],
+    ];
+
+    for (const [name, fn] of migrations) {
+      try {
+        fn();
+      } catch (err) {
+        logger.error('DB', `Migration "${name}" failed: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
   }
 
   /**
@@ -817,5 +830,154 @@ export class MigrationRunner {
         insertTag.run(name, color, now);
       }
     }
+  }
+
+  /**
+   * Create terminal_sessions table (migration 25)
+   */
+  private createTerminalSessionsTable(): void {
+    const applied = this.db.prepare('SELECT version FROM schema_versions WHERE version = ?').get(25) as SchemaVersion | undefined;
+    if (applied) return;
+
+    const tables = this.db.query(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='terminal_sessions'"
+    ).all() as TableNameRow[];
+    if (tables.length > 0) {
+      this.db.prepare('INSERT OR IGNORE INTO schema_versions (version, applied_at) VALUES (?, ?)').run(25, new Date().toISOString());
+      return;
+    }
+
+    logger.debug('DB', 'Creating terminal_sessions table');
+
+    this.db.run(`
+      CREATE TABLE IF NOT EXISTS terminal_sessions (
+        id TEXT PRIMARY KEY,
+        project TEXT,
+        shell TEXT NOT NULL,
+        cwd TEXT NOT NULL,
+        cols INTEGER DEFAULT 80,
+        rows INTEGER DEFAULT 24,
+        created_at_epoch INTEGER NOT NULL,
+        destroyed_at_epoch INTEGER,
+        recording_path TEXT
+      )
+    `);
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_terminal_sessions_project ON terminal_sessions(project)');
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_terminal_sessions_created ON terminal_sessions(created_at_epoch DESC)');
+
+    this.db.prepare('INSERT OR IGNORE INTO schema_versions (version, applied_at) VALUES (?, ?)').run(25, new Date().toISOString());
+    logger.info('DB', 'Created terminal_sessions table');
+  }
+
+  /**
+   * Create automation_jobs and automation_runs tables (migration 26)
+   */
+  private createAutomationTables(): void {
+    const applied = this.db.prepare('SELECT version FROM schema_versions WHERE version = ?').get(26) as SchemaVersion | undefined;
+    if (applied) return;
+
+    const tables = this.db.query(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='automation_jobs'"
+    ).all() as TableNameRow[];
+    if (tables.length > 0) {
+      this.db.prepare('INSERT OR IGNORE INTO schema_versions (version, applied_at) VALUES (?, ?)').run(26, new Date().toISOString());
+      return;
+    }
+
+    logger.debug('DB', 'Creating automation_jobs and automation_runs tables');
+
+    this.db.run(`
+      CREATE TABLE IF NOT EXISTS automation_jobs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL CHECK(type IN ('cron','webhook','trigger','one-time')),
+        project TEXT NOT NULL,
+        enabled INTEGER DEFAULT 1,
+        cron_expression TEXT,
+        timezone TEXT DEFAULT 'UTC',
+        webhook_path TEXT UNIQUE,
+        webhook_secret TEXT,
+        trigger_event TEXT,
+        trigger_conditions TEXT,
+        task_description TEXT NOT NULL,
+        working_directory TEXT,
+        model TEXT DEFAULT 'sonnet',
+        permission_mode TEXT DEFAULT 'plan',
+        max_runtime_seconds INTEGER DEFAULT 3600,
+        retry_on_failure INTEGER DEFAULT 0,
+        max_retries INTEGER DEFAULT 0,
+        last_run_at_epoch INTEGER,
+        next_run_at_epoch INTEGER,
+        total_runs INTEGER DEFAULT 0,
+        successful_runs INTEGER DEFAULT 0,
+        failed_runs INTEGER DEFAULT 0,
+        created_at_epoch INTEGER NOT NULL,
+        updated_at_epoch INTEGER NOT NULL
+      )
+    `);
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_automation_jobs_project ON automation_jobs(project)');
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_automation_jobs_type ON automation_jobs(type)');
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_automation_jobs_enabled ON automation_jobs(enabled)');
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_automation_jobs_webhook ON automation_jobs(webhook_path)');
+
+    this.db.run(`
+      CREATE TABLE IF NOT EXISTS automation_runs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        job_id INTEGER NOT NULL REFERENCES automation_jobs(id) ON DELETE CASCADE,
+        status TEXT NOT NULL DEFAULT 'pending',
+        triggered_by TEXT NOT NULL,
+        trigger_payload TEXT,
+        content_session_id TEXT,
+        terminal_session_id TEXT,
+        output_log TEXT,
+        error_message TEXT,
+        observations_created INTEGER DEFAULT 0,
+        started_at_epoch INTEGER NOT NULL,
+        completed_at_epoch INTEGER,
+        duration_ms INTEGER,
+        retry_number INTEGER DEFAULT 0
+      )
+    `);
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_automation_runs_job ON automation_runs(job_id)');
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_automation_runs_status ON automation_runs(status)');
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_automation_runs_started ON automation_runs(started_at_epoch DESC)');
+
+    this.db.prepare('INSERT OR IGNORE INTO schema_versions (version, applied_at) VALUES (?, ?)').run(26, new Date().toISOString());
+    logger.info('DB', 'Created automation_jobs and automation_runs tables');
+  }
+
+  /**
+   * Create terminal_recordings table (migration 27)
+   */
+  private createTerminalRecordingsTable(): void {
+    const applied = this.db.prepare('SELECT version FROM schema_versions WHERE version = ?').get(27) as SchemaVersion | undefined;
+    if (applied) return;
+
+    const tables = this.db.query(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='terminal_recordings'"
+    ).all() as TableNameRow[];
+    if (tables.length > 0) {
+      this.db.prepare('INSERT OR IGNORE INTO schema_versions (version, applied_at) VALUES (?, ?)').run(27, new Date().toISOString());
+      return;
+    }
+
+    logger.debug('DB', 'Creating terminal_recordings table');
+
+    this.db.run(`
+      CREATE TABLE IF NOT EXISTS terminal_recordings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        terminal_session_id TEXT REFERENCES terminal_sessions(id),
+        file_path TEXT NOT NULL,
+        duration_ms INTEGER,
+        size_bytes INTEGER,
+        observation_ids TEXT,
+        created_at_epoch INTEGER NOT NULL
+      )
+    `);
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_terminal_recordings_session ON terminal_recordings(terminal_session_id)');
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_terminal_recordings_created ON terminal_recordings(created_at_epoch DESC)');
+
+    this.db.prepare('INSERT OR IGNORE INTO schema_versions (version, applied_at) VALUES (?, ?)').run(27, new Date().toISOString());
+    logger.info('DB', 'Created terminal_recordings table');
   }
 }

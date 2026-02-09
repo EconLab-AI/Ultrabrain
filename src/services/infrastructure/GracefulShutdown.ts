@@ -37,6 +37,7 @@ export interface GracefulShutdownConfig {
   sessionManager: ShutdownableService;
   mcpClient?: CloseableClient;
   dbManager?: CloseableDatabase;
+  terminalManager?: { destroyAll(): void };
 }
 
 /**
@@ -60,6 +61,12 @@ export async function performGracefulShutdown(config: GracefulShutdownConfig): P
   if (config.server) {
     await closeHttpServer(config.server);
     logger.info('SYSTEM', 'HTTP server closed');
+  }
+
+  // STEP 2.5: Destroy all terminal PTY processes
+  if (config.terminalManager) {
+    config.terminalManager.destroyAll();
+    logger.info('SYSTEM', 'Terminal manager cleaned up');
   }
 
   // STEP 3: Shutdown active sessions
