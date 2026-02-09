@@ -532,6 +532,131 @@ export const migration008: Migration = {
 };
 
 /**
+ * Migration 009 - Add tags system for Project Management
+ * Creates tags and item_tags tables, seeds system tags,
+ * and adds observation_id/summary_id columns to tasks table.
+ */
+export const migration009: Migration = {
+  version: 9,
+  up: (db: Database) => {
+    // Tags table - user-defined + system tags
+    db.run(`
+      CREATE TABLE IF NOT EXISTS tags (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        color TEXT DEFAULT '#6366f1',
+        is_system INTEGER DEFAULT 0,
+        created_at_epoch INTEGER NOT NULL
+      );
+    `);
+
+    // Many-to-many: tag any entity (observation, summary, task)
+    db.run(`
+      CREATE TABLE IF NOT EXISTS item_tags (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+        item_type TEXT NOT NULL,
+        item_id INTEGER NOT NULL,
+        created_at_epoch INTEGER NOT NULL,
+        UNIQUE(tag_id, item_type, item_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_item_tags_item ON item_tags(item_type, item_id);
+      CREATE INDEX IF NOT EXISTS idx_item_tags_tag ON item_tags(tag_id);
+    `);
+
+    // Seed system tags
+    const now = Date.now();
+    const systemTags: [string, string][] = [
+      ['bug', '#ef4444'],
+      ['todo', '#f59e0b'],
+      ['idea', '#8b5cf6'],
+      ['learning', '#06b6d4'],
+      ['decision', '#3b82f6'],
+      ['feature', '#10b981'],
+      ['fix', '#f97316'],
+      ['refactor', '#6366f1'],
+      ['performance', '#ec4899'],
+      ['security', '#dc2626'],
+      ['devops', '#64748b'],
+      ['docs', '#84cc16'],
+    ];
+
+    const insertTag = db.prepare(
+      'INSERT OR IGNORE INTO tags (name, color, is_system, created_at_epoch) VALUES (?, ?, 1, ?)'
+    );
+    for (const [name, color] of systemTags) {
+      insertTag.run(name, color, now);
+    }
+
+    // Add observation_id and summary_id columns to tasks table
+    db.run(`ALTER TABLE tasks ADD COLUMN observation_id INTEGER REFERENCES observations(id)`);
+    db.run(`ALTER TABLE tasks ADD COLUMN summary_id INTEGER REFERENCES session_summaries(id)`);
+
+    console.log('✅ Created tags system tables and seeded 12 system tags');
+  },
+
+  down: (db: Database) => {
+    db.run(`DROP TABLE IF EXISTS item_tags`);
+    db.run(`DROP TABLE IF EXISTS tags`);
+    // Note: SQLite doesn't support DROP COLUMN in all versions
+    console.log('⚠️  Dropped tags tables. tasks.observation_id/summary_id columns remain (SQLite limitation)');
+  }
+};
+
+/**
+ * Migration 010 - Add UltraBrain Loop tables
+ * Creates loop_configs and loop_iterations for autonomous loop management
+ */
+export const migration010: Migration = {
+  version: 10,
+  up: (db: Database) => {
+    db.run(`
+      CREATE TABLE IF NOT EXISTS loop_configs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project TEXT NOT NULL UNIQUE,
+        enabled INTEGER DEFAULT 0,
+        mode TEXT DEFAULT 'adaptive',
+        max_iterations INTEGER DEFAULT 10,
+        task_description TEXT,
+        success_criteria TEXT,
+        completion_promises TEXT,
+        promise_logic TEXT DEFAULT 'any',
+        iteration_context_tokens INTEGER DEFAULT 500,
+        auto_compact_threshold REAL DEFAULT 0.8,
+        created_at_epoch INTEGER NOT NULL,
+        updated_at_epoch INTEGER NOT NULL
+      );
+    `);
+
+    db.run(`
+      CREATE TABLE IF NOT EXISTS loop_iterations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        loop_config_id INTEGER NOT NULL REFERENCES loop_configs(id),
+        iteration_number INTEGER NOT NULL,
+        session_id TEXT,
+        mode_used TEXT,
+        status TEXT DEFAULT 'pending',
+        context_injected TEXT,
+        observations_count INTEGER DEFAULT 0,
+        key_findings TEXT,
+        started_at_epoch INTEGER,
+        completed_at_epoch INTEGER
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_loop_iterations_config ON loop_iterations(loop_config_id);
+      CREATE INDEX IF NOT EXISTS idx_loop_iterations_status ON loop_iterations(status);
+    `);
+
+    console.log('✅ Created UltraBrain Loop tables (loop_configs, loop_iterations)');
+  },
+
+  down: (db: Database) => {
+    db.run(`DROP TABLE IF EXISTS loop_iterations`);
+    db.run(`DROP TABLE IF EXISTS loop_configs`);
+  }
+};
+
+/**
  * All migrations in order
  */
 export const migrations: Migration[] = [
@@ -542,5 +667,7 @@ export const migrations: Migration[] = [
   migration005,
   migration006,
   migration007,
-  migration008
+  migration008,
+  migration009,
+  migration010
 ];

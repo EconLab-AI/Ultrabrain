@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { Observation, Summary, UserPrompt, FeedItem } from '../types';
 import { ObservationCard } from './ObservationCard';
 import { SummaryCard } from './SummaryCard';
@@ -22,6 +22,18 @@ export function Feed({ observations, summaries, prompts, onLoadMore, isLoading, 
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const feedRef = useRef<HTMLDivElement>(null);
   const onLoadMoreRef = useRef(onLoadMore);
+  const [codeProjects, setCodeProjects] = useState<string[]>([]);
+
+  // Fetch only Claude Code projects for the dropdown
+  useEffect(() => {
+    fetch('/api/projects/stats?source=claude-code')
+      .then(r => r.json())
+      .then(resp => {
+        const list = Array.isArray(resp) ? resp : resp.projects || [];
+        setCodeProjects(list.map((s: any) => s.name || s.project).filter(Boolean));
+      })
+      .catch(() => setCodeProjects(projects));
+  }, []);
 
   // Keep the callback ref up to date
   useEffect(() => {
@@ -68,14 +80,14 @@ export function Feed({ observations, summaries, prompts, onLoadMore, isLoading, 
       <ScrollToTop targetRef={feedRef} />
       <div className="feed-content">
         {/* Project filter bar */}
-        {projects.length > 0 && (
+        {codeProjects.length > 0 && (
           <div className="feed-project-filter">
             <select
               value={currentFilter}
               onChange={e => onFilterChange(e.target.value)}
             >
               <option value="">All Projects</option>
-              {projects.map(project => (
+              {codeProjects.map(project => (
                 <option key={project} value={project}>{project}</option>
               ))}
             </select>

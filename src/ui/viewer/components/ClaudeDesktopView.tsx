@@ -57,6 +57,8 @@ export function ClaudeDesktopView({ projects }: ClaudeDesktopViewProps) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [expandedObs, setExpandedObs] = useState<any[]>([]);
   const [expandedSummary, setExpandedSummary] = useState<any | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<string | null>(null);
 
   const fetchSessions = useCallback(() => {
     const url = filterProject
@@ -113,6 +115,24 @@ export function ClaudeDesktopView({ projects }: ClaudeDesktopViewProps) {
     }
   }, [expandedId]);
 
+  const handleImport = useCallback(async () => {
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const res = await fetch('/api/claude-desktop/import', { method: 'POST' });
+      const data = await res.json();
+      setImportResult(`Imported ${data.imported || 0} sessions`);
+      fetchSessions();
+    } catch {
+      setImportResult('Import failed');
+    } finally {
+      setImporting(false);
+    }
+  }, [fetchSessions]);
+
+  // Get unique projects from Claude Desktop sessions for filtering
+  const cdProjects = [...new Set(sessions.map(s => s.project))].sort();
+
   if (loading) {
     return (
       <div className="cd-container">
@@ -145,7 +165,7 @@ export function ClaudeDesktopView({ projects }: ClaudeDesktopViewProps) {
             onChange={e => setFilterProject(e.target.value)}
           >
             <option value="">All Projects</option>
-            {projects.map(p => (
+            {cdProjects.map(p => (
               <option key={p} value={p}>{p}</option>
             ))}
           </select>
@@ -158,9 +178,42 @@ export function ClaudeDesktopView({ projects }: ClaudeDesktopViewProps) {
         </div>
       </div>
 
+      {importResult && (
+        <div style={{
+          padding: '8px 12px',
+          marginBottom: '12px',
+          fontSize: '0.8rem',
+          background: 'var(--bg-secondary, #1a1a2e)',
+          borderRadius: '6px',
+          border: '1px solid var(--border-color, #333)',
+        }}>
+          {importResult}
+        </div>
+      )}
+
       {sessions.length === 0 ? (
         <div className="cd-empty">
-          No sessions from Claude Desktop yet. Start a Claude Code session with UltraBrain hooks enabled.
+          <div>No Claude Desktop sessions imported yet.</div>
+          <div style={{ fontSize: '0.8rem', opacity: 0.6, marginTop: '8px' }}>
+            Claude Desktop stores conversations on Anthropic's servers. Local agent mode sessions (if available) can be imported automatically.
+          </div>
+          <button
+            onClick={handleImport}
+            disabled={importing}
+            style={{
+              marginTop: '12px',
+              padding: '6px 16px',
+              fontSize: '0.8rem',
+              borderRadius: '6px',
+              border: '1px solid var(--border-color, #333)',
+              background: 'var(--accent-color, #6366f1)',
+              color: '#fff',
+              cursor: importing ? 'wait' : 'pointer',
+              opacity: importing ? 0.6 : 1,
+            }}
+          >
+            {importing ? 'Importing...' : 'Import Now'}
+          </button>
         </div>
       ) : (
         <div className="cd-sessions">

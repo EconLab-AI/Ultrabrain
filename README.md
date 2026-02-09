@@ -81,12 +81,20 @@ And with the **Claude Desktop Integration**, you can brainstorm and plan in Clau
       <td>MCP bridge + local session import from Claude Desktop's agent mode</td>
     </tr>
     <tr>
-      <td><strong>3D Brain Viewer</strong></td>
-      <td>Animated Three.js brain visualization with real-time memory feed</td>
+      <td><strong>Web Dashboard</strong></td>
+      <td>Full project management suite: Kanban, bugs, todos, learnings, tags, and real-time feed</td>
     </tr>
     <tr>
-      <td><strong>Kanban Board</strong></td>
-      <td>Built-in project task management with drag-and-drop</td>
+      <td><strong>CLAUDE.md Manager</strong></td>
+      <td>Browse, edit, and manage all 7 tiers of CLAUDE.md files per project</td>
+    </tr>
+    <tr>
+      <td><strong>Ralph Loop</strong></td>
+      <td>Autonomous iteration loops — launches Claude CLI in Terminal.app for hands-free task execution</td>
+    </tr>
+    <tr>
+      <td><strong>Auto-Tagging</strong></td>
+      <td>AI-powered labeling: bugs, todos, ideas, learnings, features, security, and more — auto-detected from content</td>
     </tr>
     <tr>
       <td><strong>Python Required</strong></td>
@@ -107,10 +115,6 @@ And with the **Claude Desktop Integration**, you can brainstorm and plan in Clau
     <tr>
       <td><strong>Project Isolation</strong></td>
       <td>Each project gets its own knowledge silo — no cross-contamination</td>
-    </tr>
-    <tr>
-      <td><strong>Dark Theme</strong></td>
-      <td>Dark-only UI with monospace typography and ambient glow effects</td>
     </tr>
     <tr>
       <td><strong>Setup</strong></td>
@@ -239,9 +243,17 @@ Claude sees a concise summary of your project history at the start of every sess
 │  └─────────┘  └──────────────┘  └────────────────────┘  │
 │                                                          │
 │  ┌──────────────────────────────────────────────────┐    │
-│  │      Web Viewer UI (React + Three.js)             │    │
-│  │      http://localhost:37777                       │    │
-│  │      3D Brain · Memory Feed · Kanban Board        │    │
+│  │       Web Dashboard (React)                       │    │
+│  │       http://localhost:37777                       │    │
+│  │                                                    │    │
+│  │  Project Management · CLAUDE.md Manager            │    │
+│  │  Kanban Board · Ralph Loop · Agent Teams           │    │
+│  │  Memory Feed · Claude Desktop Import               │    │
+│  └──────────────────────────────────────────────────┘    │
+│                                                          │
+│  ┌──────────────────────────────────────────────────┐    │
+│  │  AutoLabeler · KanbanPopulator · Tag System       │    │
+│  │  AI-powered observation classification            │    │
 │  └──────────────────────────────────────────────────┘    │
 │                                                          │
 │  ┌──────────────────────────────────────────────────┐    │
@@ -271,17 +283,42 @@ Claude sees a concise summary of your project history at the start of every sess
 ### Persistent Memory
 Context survives across sessions, days, and weeks. Claude knows what you built yesterday.
 
+### Project Management Dashboard
+A full-featured PM suite built into the web viewer at `http://localhost:37777`:
+
+- **Overview** — High-level stats across all projects with project filtering (Claude Code projects only)
+- **Current State** — Live project dashboard with recent activity and status
+- **Bugs & Fixes** — Track all discovered bugs with tag-based filtering and search
+- **Todos** — Task tracking with Kanban integration
+- **Ideas** — Capture and organize feature ideas and brainstorming results
+- **Learnings** — Chronological timeline of all captured knowledge, grouped by date
+- **Tags** — Full tag management system with 13 built-in system tags
+- **Kanban Board** — Drag-and-drop task management (Todo, In Progress, Done) with one-click backfill from observations
+
+### CLAUDE.md Manager
+Browse and edit all 7 tiers of the CLAUDE.md hierarchy per project — from managed policies to subdirectory rules. The editor shows file metadata (tokens, load frequency), line numbers, and tracks unsaved changes. Supports the full Claude Code context system:
+
+| Level | File | Scope |
+|-------|------|-------|
+| Managed Policy | `/Library/Application Support/ClaudeCode/CLAUDE.md` | Organization-wide |
+| Project Root | `./CLAUDE.md` | Team (in Git) |
+| Project Rules | `./.claude/rules/*.md` | Team (in Git) |
+| User Global | `~/.claude/CLAUDE.md` | Personal, all projects |
+| Project Local | `./CLAUDE.local.md` | Personal, this project |
+| Auto Memory | `~/.claude/projects/<project>/memory/MEMORY.md` | Claude's own notes |
+| Subdirectory | `./subdir/CLAUDE.md` | On-demand |
+
+### Ralph Loop (Autonomous Iteration)
+Launch autonomous Claude sessions directly from the web UI. Configure a task description, set iteration limits and success criteria, then click Start — UltraBrain opens Terminal.app with `claude --dangerously-skip-permissions` pointed at your project directory. Ideal for repetitive tasks, multi-step refactors, and overnight batch work.
+
+### Auto-Tagging & Classification
+The **AutoLabeler** automatically classifies every observation with semantic tags based on content analysis. 13 built-in system tags: `bug`, `todo`, `idea`, `learning`, `decision`, `feature`, `fix`, `refactor`, `performance`, `security`, `devops`, `docs`, `planned-feature`. The **KanbanPopulator** converts tagged observations into actionable Kanban tasks automatically.
+
+### Agent Teams Dashboard
+Monitor and manage multi-agent team sessions. View active teams, their tasks, and coordination status across your projects.
+
 ### Claude Desktop Integration
 Two-way integration: **MCP Bridge** for real-time knowledge sharing between Claude Desktop and Claude Code, plus **Local Session Import** to bring your entire Claude Desktop conversation history into UltraBrain. All sessions, prompts, and metadata are preserved.
-
-### 3D Brain Visualization
-An animated Three.js brain rotates in the viewer header, with neural nodes and connections that pulse with ambient light. A visual representation of your growing knowledge base.
-
-### Kanban Board
-Built-in task management with drag-and-drop between columns (Todo, In Progress, Done). Auto-categorizes tasks by type (bug, feature, UI, devops, etc.) with color-coded badges.
-
-### Project Isolation
-Every project gets its own knowledge silo. Observations are tagged with the project name and all queries support project filtering. No cross-contamination between codebases.
 
 ### Semantic Vector Search
 LanceDB + all-MiniLM-L6-v2 embeddings find the most relevant memories, not just keyword matches. Search in <2ms.
@@ -300,14 +337,33 @@ save_memory(text="API requires X-API-Key header", title="API Auth", project="my-
 list_projects()
 ```
 
-### Web Viewer
-Real-time memory stream at `http://localhost:37777`. See observations, sessions, and search your history visually — all in a dark-only theme with monospace typography.
-
 ### Privacy Control
 Use `<private>` tags to exclude sensitive content from storage. Tag stripping happens at the edge, before data reaches the database.
 
 ### Zero Configuration
 Auto-installs dependencies, auto-creates database, auto-starts worker. Settings in `~/.ultrabrain/settings.json` for fine-tuning.
+
+<br>
+
+---
+
+<br>
+
+## Web Dashboard
+
+The UltraBrain web dashboard at `http://localhost:37777` provides a comprehensive interface for managing your AI development workflow:
+
+| Section | Description |
+|---------|-------------|
+| **Projects** | Browse all tracked projects with observation counts and activity timelines |
+| **Project Management** | Full PM suite: Overview, Current State, Bugs, Todos, Ideas, Learnings, Tags, Kanban |
+| **CLAUDE.md** | Visual editor for all CLAUDE.md files across the 7-tier hierarchy |
+| **Claude Desktop** | View imported Claude Desktop sessions with metadata and prompts |
+| **Ralph Loop** | Configure and launch autonomous Claude iteration loops |
+| **Agent Teams** | Monitor multi-agent team sessions and coordination |
+| **Feed** | Real-time stream of observations, summaries, and prompts with project filtering |
+
+The dashboard uses a dark theme with monospace typography, inline styles (no CSS modules), and real-time SSE updates.
 
 <br>
 

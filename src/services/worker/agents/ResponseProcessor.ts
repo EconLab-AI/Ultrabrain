@@ -24,6 +24,8 @@ import type { SessionManager } from '../SessionManager.js';
 import type { WorkerRef, StorageResult } from './types.js';
 import { broadcastObservation, broadcastSummary } from './ObservationBroadcaster.js';
 import { cleanupProcessedMessages } from './SessionCleanupHelper.js';
+import { autoLabelObservation, autoLabelSummary, detectTags } from '../AutoLabeler.js';
+import { populateKanbanFromObservation } from '../KanbanPopulator.js';
 
 /**
  * Process agent response text (parse XML, save to database, sync to LanceDB, broadcast SSE)
@@ -214,6 +216,32 @@ async function syncAndBroadcastObservations(
       }, error);
     });
 
+    // Auto-label observation with PM tags (fire-and-forget)
+    try {
+      autoLabelObservation(
+        dbManager.getSessionStore().db,
+        obsId,
+        obs.type,
+        obs.title || null,
+        obs.narrative || null,
+        null  // text field is not in ParsedObservation
+      );
+
+      // Auto-populate Kanban from tagged observations (fire-and-forget)
+      const detectedTags = detectTags(obs.type, obs.title || null, obs.narrative || null, null);
+      if (detectedTags.length > 0) {
+        populateKanbanFromObservation(
+          dbManager.getSessionStore().db,
+          obsId,
+          detectedTags,
+          obs.title || null,
+          session.project
+        );
+      }
+    } catch (error) {
+      logger.debug('AUTOLABEL', 'Auto-label failed (non-critical)', { obsId }, error as Error);
+    }
+
     // Broadcast to SSE clients (for web UI)
     // BUGFIX: Use obs.files_read and obs.files_modified (not obs.files)
     broadcastObservation(worker, {
@@ -304,6 +332,21 @@ async function syncAndBroadcastSummary(
       request: summaryForStore.request || '(no request)'
     }, error);
   });
+
+  // Auto-label summary with PM tags (fire-and-forget)
+  try {
+    autoLabelSummary(
+      dbManager.getSessionStore().db,
+      result.summaryId,
+      summaryForStore.request,
+      summaryForStore.investigated,
+      summaryForStore.learned,
+      summaryForStore.completed,
+      summaryForStore.next_steps
+    );
+  } catch (error) {
+    logger.debug('AUTOLABEL', 'Summary auto-label failed (non-critical)', { summaryId: result.summaryId }, error as Error);
+  }
 
   // Broadcast to SSE clients (for web UI)
   broadcastSummary(worker, {

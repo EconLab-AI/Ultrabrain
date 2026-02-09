@@ -49,6 +49,8 @@ export class SessionStore {
     this.addFailedAtEpochColumn();
     this.addOnUpdateCascadeToForeignKeys();
     this.addSessionSourceColumn();
+    this.createTasksTable();
+    this.createTagsSystem();
   }
 
   /**
@@ -849,6 +851,101 @@ export class SessionStore {
     } catch (error) {
       logger.error('DB', 'Failed to add source column to sdk_sessions', {}, error as Error);
     }
+  }
+
+  /**
+   * Create tasks table for Kanban board (migration from migrations.ts 008, using version 24)
+   */
+  private createTasksTable(): void {
+    const tables = this.db.query("SELECT name FROM sqlite_master WHERE type='table' AND name='tasks'").all() as TableNameRow[];
+    if (tables.length > 0) return;
+
+    this.db.run(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        status TEXT NOT NULL DEFAULT 'todo',
+        priority TEXT DEFAULT 'medium',
+        category TEXT,
+        created_at_epoch INTEGER NOT NULL,
+        updated_at_epoch INTEGER NOT NULL,
+        completed_at_epoch INTEGER
+      )
+    `);
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_tasks_project ON tasks(project)');
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(project, status)');
+
+    logger.info('DB', 'Created tasks table for Kanban board');
+  }
+
+  /**
+   * Create tags system for Project Management (migration 23)
+   */
+  private createTagsSystem(): void {
+    const applied = this.db.prepare('SELECT version FROM schema_versions WHERE version = ?').get(23) as SchemaVersion | undefined;
+    if (applied) return;
+
+    const tables = this.db.query("SELECT name FROM sqlite_master WHERE type='table' AND name='tags'").all() as TableNameRow[];
+    if (tables.length > 0) {
+      this.db.prepare('INSERT OR IGNORE INTO schema_versions (version, applied_at) VALUES (?, ?)').run(23, new Date().toISOString());
+      return;
+    }
+
+    logger.debug('DB', 'Creating tags system tables');
+
+    this.db.run(`
+      CREATE TABLE IF NOT EXISTS tags (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        color TEXT DEFAULT '#6366f1',
+        is_system INTEGER DEFAULT 0,
+        created_at_epoch INTEGER NOT NULL
+      )
+    `);
+
+    this.db.run(`
+      CREATE TABLE IF NOT EXISTS item_tags (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+        item_type TEXT NOT NULL,
+        item_id INTEGER NOT NULL,
+        created_at_epoch INTEGER NOT NULL,
+        UNIQUE(tag_id, item_type, item_id)
+      )
+    `);
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_item_tags_item ON item_tags(item_type, item_id)');
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_item_tags_tag ON item_tags(tag_id)');
+
+    const now = Date.now();
+    const systemTags: [string, string][] = [
+      ['bug', '#ef4444'], ['todo', '#f59e0b'], ['idea', '#8b5cf6'],
+      ['learning', '#06b6d4'], ['decision', '#3b82f6'], ['feature', '#10b981'],
+      ['fix', '#f97316'], ['refactor', '#6366f1'], ['performance', '#ec4899'],
+      ['security', '#dc2626'], ['devops', '#64748b'], ['docs', '#84cc16'],
+    ];
+
+    const insertTag = this.db.prepare(
+      'INSERT OR IGNORE INTO tags (name, color, is_system, created_at_epoch) VALUES (?, ?, 1, ?)'
+    );
+    for (const [name, color] of systemTags) {
+      insertTag.run(name, color, now);
+    }
+
+    // Add observation_id and summary_id to tasks table if it exists
+    const tasksInfo = this.db.query('PRAGMA table_info(tasks)').all() as TableColumnInfo[];
+    if (tasksInfo.length > 0) {
+      if (!tasksInfo.some(col => col.name === 'observation_id')) {
+        this.db.run('ALTER TABLE tasks ADD COLUMN observation_id INTEGER REFERENCES observations(id)');
+      }
+      if (!tasksInfo.some(col => col.name === 'summary_id')) {
+        this.db.run('ALTER TABLE tasks ADD COLUMN summary_id INTEGER REFERENCES session_summaries(id)');
+      }
+    }
+
+    this.db.prepare('INSERT OR IGNORE INTO schema_versions (version, applied_at) VALUES (?, ?)').run(23, new Date().toISOString());
+    logger.info('DB', 'Created tags system tables and seeded 12 system tags');
   }
 
   /**

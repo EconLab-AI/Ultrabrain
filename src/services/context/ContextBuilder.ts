@@ -29,6 +29,9 @@ import { renderHeader } from './sections/HeaderRenderer.js';
 import { renderTimeline } from './sections/TimelineRenderer.js';
 import { shouldShowSummary, renderSummaryFields } from './sections/SummaryRenderer.js';
 import { renderPreviouslySection, renderFooter } from './sections/FooterRenderer.js';
+import { renderProjectStatus } from './sections/ProjectStatusRenderer.js';
+import { renderLoopContext } from './renderers/LoopContextRenderer.js';
+import { renderTeamContext } from './sections/TeamContextRenderer.js';
 import { renderMarkdownEmptyState } from './formatters/MarkdownFormatter.js';
 import { renderColorEmptyState } from './formatters/ColorFormatter.js';
 
@@ -80,7 +83,8 @@ function buildContextOutput(
   config: ContextConfig,
   cwd: string,
   sessionId: string | undefined,
-  useColors: boolean
+  useColors: boolean,
+  db?: SessionStore | null
 ): string {
   const output: string[] = [];
 
@@ -98,6 +102,29 @@ function buildContextOutput(
 
   // Render timeline
   output.push(...renderTimeline(timeline, fullObservationIds, config, cwd, useColors));
+
+  // Render project status (PM tags summary) if available
+  if (db) {
+    try {
+      output.push(...renderProjectStatus(db.db, project, useColors));
+    } catch {
+      // Non-critical: skip PM status if tags table doesn't exist
+    }
+
+    // Render loop context if active loop exists
+    try {
+      output.push(...renderLoopContext(db.db, project, useColors));
+    } catch {
+      // Non-critical: skip loop context if tables don't exist
+    }
+  }
+
+  // Render team context if active teams exist
+  try {
+    output.push(...renderTeamContext(project, useColors));
+  } catch {
+    // Non-critical: skip team context if teams dir doesn't exist
+  }
 
   // Render most recent summary if applicable
   const mostRecentSummary = summaries[0];
@@ -162,7 +189,8 @@ export async function generateContext(
       config,
       cwd,
       input?.session_id,
-      useColors
+      useColors,
+      db
     );
   } finally {
     db.close();

@@ -2739,12 +2739,28 @@
       letter-spacing: 0.02em;
     }
 
+    /* Sidebar PM section */
+    .left-sidebar-divider {
+      height: 1px;
+      background: var(--color-border-primary);
+      margin: 6px 12px;
+      opacity: 0.5;
+    }
+
+    .left-sidebar-section-toggle {
+      opacity: 0.8;
+    }
+
+    .left-sidebar-sub-item {
+      font-size: 0.78rem;
+    }
+
     /* Sidebar handle - always visible */
     .sidebar-handle {
       position: absolute;
       top: 50%;
-      right: -28px;
-      transform: translateY(-50%);
+      right: 0;
+      transform: translateY(-50%) translateX(100%);
       width: 28px;
       height: 48px;
       background: var(--color-bg-secondary);
@@ -2784,13 +2800,14 @@
     .main-content-wrapper {
       transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       margin-left: 0;
-      min-height: 100vh;
+      height: 100vh;
       display: flex;
       flex-direction: column;
+      overflow-y: auto;
     }
 
     .main-content-wrapper.sidebar-open {
-      margin-left: 220px;
+      margin-left: 248px;
     }
 
     /* Mobile sidebar: overlay mode */

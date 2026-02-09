@@ -110,6 +110,11 @@ import { SettingsRoutes } from './worker/http/routes/SettingsRoutes.js';
 import { LogsRoutes } from './worker/http/routes/LogsRoutes.js';
 import { MemoryRoutes } from './worker/http/routes/MemoryRoutes.js';
 import { TaskRoutes } from './worker/http/routes/TaskRoutes.js';
+import { PMRoutes } from './worker/http/routes/PMRoutes.js';
+import { CurrentStateRoutes } from './worker/http/routes/CurrentStateRoutes.js';
+import { ClaudeMdRoutes } from './worker/http/routes/ClaudeMdRoutes.js';
+import { LoopRoutes } from './worker/http/routes/LoopRoutes.js';
+import { TeamsRoutes } from './worker/http/routes/TeamsRoutes.js';
 
 // Process management for zombie cleanup (Issue #737)
 import { startOrphanReaper, reapOrphanedProcesses } from './worker/ProcessRegistry.js';
@@ -283,6 +288,11 @@ export class WorkerService {
     this.server.registerRoutes(new LogsRoutes());
     this.server.registerRoutes(new MemoryRoutes(this.dbManager, 'ultrabrain'));
     this.server.registerRoutes(new TaskRoutes(this.dbManager));
+    this.server.registerRoutes(new PMRoutes(this.dbManager));
+    this.server.registerRoutes(new CurrentStateRoutes(this.dbManager));
+    this.server.registerRoutes(new ClaudeMdRoutes(this.dbManager));
+    this.server.registerRoutes(new LoopRoutes(this.dbManager));
+    this.server.registerRoutes(new TeamsRoutes());
   }
 
   /**

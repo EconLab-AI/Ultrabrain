@@ -7,6 +7,16 @@ import { KanbanView } from './components/KanbanView';
 import { ClaudeDesktopView } from './components/ClaudeDesktopView';
 import { ContextSettingsModal } from './components/ContextSettingsModal';
 import { LogsDrawer } from './components/LogsModal';
+import { PMOverview } from './components/pm/PMOverview';
+import { BugsView } from './components/pm/BugsView';
+import { TodosView } from './components/pm/TodosView';
+import { IdeasView } from './components/pm/IdeasView';
+import { LearningsView } from './components/pm/LearningsView';
+import { TagsView } from './components/pm/TagsView';
+import { CurrentStateView } from './components/pm/CurrentStateView';
+import { ClaudeMdManager } from './components/claudemd/ClaudeMdManager';
+import { LoopManager } from './components/loop/LoopManager';
+import { TeamDashboard } from './components/teams/TeamDashboard';
 import { useSSE } from './hooks/useSSE';
 import { useSettings } from './hooks/useSettings';
 import { useStats } from './hooks/useStats';
@@ -31,13 +41,21 @@ export function App() {
       return stored ? JSON.parse(stored) : false;
     } catch { return false; }
   });
-  const [currentView, setCurrentView] = useState<ViewType>('feed');
+  const [currentView, setCurrentView] = useState<ViewType>('projects');
+  const [pmProject, setPmProject] = useState('');
 
   const { observations, summaries, prompts, projects, isProcessing, queueDepth, isConnected } = useSSE();
   const { settings, saveSettings, isSaving, saveStatus } = useSettings();
   const { stats, refreshStats } = useStats();
   useTheme();
   const pagination = usePagination(currentFilter);
+
+  // Auto-select first project when projects load and no project is selected
+  useEffect(() => {
+    if (!pmProject && projects.length > 0) {
+      setPmProject(projects[0]);
+    }
+  }, [projects, pmProject]);
 
   // When filtering by project: ONLY use paginated data (API-filtered)
   // When showing all projects: merge SSE live data with paginated data
@@ -124,10 +142,30 @@ export function App() {
     switch (currentView) {
       case 'projects':
         return <ProjectsView onSelectProject={handleSelectProject} />;
-      case 'kanban':
-        return <KanbanView currentProject={currentFilter} projects={projects} />;
       case 'claude-desktop':
         return <ClaudeDesktopView projects={projects} />;
+      case 'pm-overview':
+        return <PMOverview currentProject={pmProject} projects={projects} onNavigate={handleViewChange} onProjectChange={setPmProject} />;
+      case 'pm-bugs':
+        return <BugsView currentProject={pmProject} />;
+      case 'pm-todos':
+        return <TodosView currentProject={pmProject} />;
+      case 'pm-ideas':
+        return <IdeasView currentProject={pmProject} />;
+      case 'pm-learnings':
+        return <LearningsView currentProject={pmProject} />;
+      case 'pm-tags':
+        return <TagsView />;
+      case 'kanban':
+        return <KanbanView currentProject={pmProject} projects={projects} />;
+      case 'current-state':
+        return <CurrentStateView currentProject={pmProject} />;
+      case 'claude-md':
+        return <ClaudeMdManager currentProject={pmProject} projects={projects} onProjectChange={setPmProject} />;
+      case 'loop':
+        return <LoopManager currentProject={pmProject} projects={projects} onProjectChange={setPmProject} />;
+      case 'teams':
+        return <TeamDashboard currentProject={pmProject} projects={projects} onProjectChange={setPmProject} />;
       case 'feed':
       default:
         return (

@@ -8,10 +8,17 @@ interface Task {
   status: string;
   priority: string;
   category: string;
+  observation_id: number | null;
   created_at_epoch: number;
   updated_at_epoch: number;
   completed_at_epoch: number | null;
 }
+
+const CATEGORY_COLORS: Record<string, string> = {
+  bug: '#ef4444',
+  feature: '#10b981',
+  task: '#3b82f6',
+};
 
 interface KanbanViewProps {
   currentProject: string;
@@ -32,22 +39,23 @@ const PRIORITY_DOTS: Record<string, string> = {
 
 export function KanbanView({ currentProject, projects }: KanbanViewProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [filterProject, setFilterProject] = useState(currentProject);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [newProject, setNewProject] = useState(currentProject || projects[0] || '');
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [backfillStatus, setBackfillStatus] = useState<string | null>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
   const fetchTasks = useCallback(() => {
-    const url = filterProject ? `/api/tasks?project=${encodeURIComponent(filterProject)}` : '/api/tasks';
+    const url = currentProject ? `/api/tasks?project=${encodeURIComponent(currentProject)}` : '/api/tasks';
     fetch(url)
       .then(res => res.json())
       .then(data => setTasks(data.tasks || []))
       .catch(err => console.error('Failed to fetch tasks:', err));
-  }, [filterProject]);
+  }, [currentProject]);
 
   useEffect(() => {
     fetchTasks();
@@ -92,18 +100,47 @@ export function KanbanView({ currentProject, projects }: KanbanViewProps) {
       .catch(err => console.error('Failed to update task:', err));
   }, [fetchTasks]);
 
+  const updateTask = useCallback((taskId: number, updates: Partial<Task>) => {
+    fetch(`/api/tasks/${taskId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    })
+      .then(() => {
+        fetchTasks();
+        setSelectedTask(null);
+      })
+      .catch(err => console.error('Failed to update task:', err));
+  }, [fetchTasks]);
+
   const deleteTask = useCallback((taskId: number) => {
     fetch(`/api/tasks/${taskId}`, { method: 'DELETE' })
-      .then(() => fetchTasks())
+      .then(() => {
+        fetchTasks();
+        setSelectedTask(null);
+      })
       .catch(err => console.error('Failed to delete task:', err));
   }, [fetchTasks]);
+
+  const handleBackfill = useCallback(async () => {
+    const project = currentProject || projects[0];
+    if (!project) return;
+    setBackfillStatus('Populating...');
+    try {
+      const res = await fetch(`/api/tasks/backfill?project=${encodeURIComponent(project)}`, { method: 'POST' });
+      const data = await res.json();
+      setBackfillStatus(`Created ${data.created} tasks${data.tagsApplied ? `, applied ${data.tagsApplied} tags` : ''}`);
+      fetchTasks();
+    } catch {
+      setBackfillStatus('Backfill failed');
+    }
+  }, [currentProject, projects, fetchTasks]);
 
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, task: Task) => {
     setDraggedTask(task);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', String(task.id));
-    // Add dragging class after a tick
     requestAnimationFrame(() => {
       const el = document.getElementById(`task-${task.id}`);
       if (el) el.classList.add('dragging');
@@ -140,18 +177,28 @@ export function KanbanView({ currentProject, projects }: KanbanViewProps) {
   return (
     <div className="kanban-container">
       <div className="kanban-header">
-        <h2 className="kanban-title">Kanban Board</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <h2 className="kanban-title">Kanban Board</h2>
+        </div>
         <div className="kanban-controls">
-          <select
-            className="kanban-project-filter"
-            value={filterProject}
-            onChange={e => setFilterProject(e.target.value)}
+          {backfillStatus && (
+            <span style={{ fontSize: '0.75rem', opacity: 0.6, marginRight: '8px' }}>{backfillStatus}</span>
+          )}
+          <button
+            onClick={handleBackfill}
+            style={{
+              background: 'none',
+              border: '1px solid var(--border-color, #333)',
+              borderRadius: '6px',
+              padding: '4px 10px',
+              fontSize: '0.72rem',
+              cursor: 'pointer',
+              color: 'var(--text-muted, #888)',
+            }}
+            title="Create tasks from tagged observations"
           >
-            <option value="">All Projects</option>
-            {projects.map(p => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
+            Populate from observations
+          </button>
         </div>
       </div>
 
@@ -228,18 +275,46 @@ export function KanbanView({ currentProject, projects }: KanbanViewProps) {
                     draggable
                     onDragStart={e => handleDragStart(e, task)}
                     onDragEnd={handleDragEnd}
+                    onClick={() => setSelectedTask(task)}
                   >
                     <div className="kanban-task-top">
                       <span className={`kanban-priority-dot ${PRIORITY_DOTS[task.priority] || ''}`} title={task.priority} />
                       <span className="kanban-task-title">{task.title}</span>
-                      <button className="kanban-task-delete" onClick={() => deleteTask(task.id)} title="Delete">&times;</button>
+                      <button
+                        className="kanban-task-delete"
+                        onClick={e => { e.stopPropagation(); deleteTask(task.id); }}
+                        title="Delete"
+                      >
+                        &times;
+                      </button>
                     </div>
                     {task.description && (
                       <div className="kanban-task-desc">{task.description}</div>
                     )}
                     <div className="kanban-task-meta">
-                      <span className="kanban-category-badge">{task.category}</span>
-                      {!filterProject && <span className="kanban-project-tag">{task.project}</span>}
+                      <span
+                        className="kanban-category-badge"
+                        style={{
+                          background: `${CATEGORY_COLORS[task.category] || '#6366f1'}20`,
+                          color: CATEGORY_COLORS[task.category] || '#6366f1',
+                        }}
+                      >
+                        {task.category}
+                      </span>
+                      {task.observation_id && (
+                        <span
+                          className="kanban-obs-link"
+                          style={{
+                            fontSize: '0.65rem',
+                            opacity: 0.5,
+                            cursor: 'pointer',
+                          }}
+                          title={`Linked to observation #${task.observation_id}`}
+                        >
+                          obs#{task.observation_id}
+                        </span>
+                      )}
+                      {!currentProject && <span className="kanban-project-tag">{task.project}</span>}
                     </div>
                   </div>
                 ))}
@@ -247,6 +322,214 @@ export function KanbanView({ currentProject, projects }: KanbanViewProps) {
             </div>
           );
         })}
+      </div>
+
+      {/* Task Detail Modal */}
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          onSave={(updates) => updateTask(selectedTask.id, updates)}
+          onDelete={() => deleteTask(selectedTask.id)}
+          onClose={() => setSelectedTask(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+interface TaskDetailModalProps {
+  task: Task;
+  onSave: (updates: Partial<Task>) => void;
+  onDelete: () => void;
+  onClose: () => void;
+}
+
+function TaskDetailModal({ task, onSave, onDelete, onClose }: TaskDetailModalProps) {
+  const [title, setTitle] = useState(task.title);
+  const [description, setDescription] = useState(task.description || '');
+  const [status, setStatus] = useState(task.status);
+  const [priority, setPriority] = useState(task.priority);
+
+  const handleSave = () => {
+    onSave({ title, description: description || null, status, priority });
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0, left: 0, right: 0, bottom: 0,
+        background: 'rgba(0,0,0,0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: 'var(--color-bg-secondary, #1a1a2e)',
+          borderRadius: '12px',
+          border: '1px solid var(--border-color, #333)',
+          padding: '24px',
+          width: '480px',
+          maxWidth: '90vw',
+          maxHeight: '80vh',
+          overflowY: 'auto',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <span style={{ fontSize: '0.7rem', opacity: 0.4 }}>Task #{task.id}</span>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'var(--text-muted, #888)', fontSize: '1.2rem',
+            }}
+          >
+            &times;
+          </button>
+        </div>
+
+        {/* Title */}
+        <input
+          type="text"
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          style={{
+            width: '100%',
+            padding: '8px 10px',
+            fontSize: '1rem',
+            fontWeight: 600,
+            borderRadius: '6px',
+            border: '1px solid var(--border-color, #333)',
+            background: 'var(--color-bg-primary, #0f0f1a)',
+            color: 'inherit',
+            marginBottom: '12px',
+            boxSizing: 'border-box',
+          }}
+        />
+
+        {/* Description */}
+        <textarea
+          value={description}
+          onChange={e => setDescription(e.target.value)}
+          placeholder="Description..."
+          rows={4}
+          style={{
+            width: '100%',
+            padding: '8px 10px',
+            fontSize: '0.85rem',
+            borderRadius: '6px',
+            border: '1px solid var(--border-color, #333)',
+            background: 'var(--color-bg-primary, #0f0f1a)',
+            color: 'inherit',
+            marginBottom: '12px',
+            resize: 'vertical',
+            boxSizing: 'border-box',
+          }}
+        />
+
+        {/* Status + Priority row */}
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: '0.7rem', opacity: 0.5, display: 'block', marginBottom: '4px' }}>Status</label>
+            <select
+              value={status}
+              onChange={e => setStatus(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                fontSize: '0.8rem',
+                borderRadius: '6px',
+                border: '1px solid var(--border-color, #333)',
+                background: 'var(--color-bg-primary, #0f0f1a)',
+                color: 'inherit',
+              }}
+            >
+              <option value="todo">Todo</option>
+              <option value="in_progress">In Progress</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: '0.7rem', opacity: 0.5, display: 'block', marginBottom: '4px' }}>Priority</label>
+            <select
+              value={priority}
+              onChange={e => setPriority(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                fontSize: '0.8rem',
+                borderRadius: '6px',
+                border: '1px solid var(--border-color, #333)',
+                background: 'var(--color-bg-primary, #0f0f1a)',
+                color: 'inherit',
+              }}
+            >
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Meta info */}
+        <div style={{ fontSize: '0.75rem', opacity: 0.5, marginBottom: '16px' }}>
+          <div>Category: {task.category}</div>
+          {task.observation_id && <div>Linked observation: #{task.observation_id}</div>}
+          <div>Created: {new Date(task.created_at_epoch).toLocaleString()}</div>
+        </div>
+
+        {/* Action buttons */}
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between' }}>
+          <button
+            onClick={onDelete}
+            style={{
+              padding: '6px 14px',
+              fontSize: '0.8rem',
+              borderRadius: '6px',
+              border: '1px solid #ef444440',
+              background: '#ef444410',
+              color: '#ef4444',
+              cursor: 'pointer',
+            }}
+          >
+            Delete
+          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={onClose}
+              style={{
+                padding: '6px 14px',
+                fontSize: '0.8rem',
+                borderRadius: '6px',
+                border: '1px solid var(--border-color, #333)',
+                background: 'none',
+                color: 'var(--text-muted, #888)',
+                cursor: 'pointer',
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              style={{
+                padding: '6px 14px',
+                fontSize: '0.8rem',
+                borderRadius: '6px',
+                border: 'none',
+                background: 'var(--accent-color, #6366f1)',
+                color: '#fff',
+                cursor: 'pointer',
+              }}
+            >
+              Save
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
