@@ -189,22 +189,37 @@ canvas#scene{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1}
   color:var(--glow-secondary);
 }
 
-/* Logo */
-.logo{
-  position:fixed;top:20px;left:20px;z-index:20;
-  display:flex;align-items:center;gap:10px;
-  opacity:0;transition:opacity 0.5s;
+/* Branding header */
+.branding{
+  position:fixed;top:0;left:0;width:100%;z-index:20;
+  display:flex;flex-direction:column;align-items:center;
+  padding:18px 20px 14px;
+  pointer-events:none;
+  background:linear-gradient(180deg,rgba(5,5,8,0.85) 0%,rgba(5,5,8,0.4) 70%,transparent 100%);
 }
-.logo.visible{opacity:1}
-.logo-icon{
-  width:32px;height:32px;
-  background:linear-gradient(135deg,var(--glow-primary),var(--glow-secondary));
-  border-radius:8px;display:flex;align-items:center;justify-content:center;
+.branding-econlab{
+  height:20px;width:auto;
+  opacity:0.6;margin-bottom:10px;
 }
-.logo-icon svg{width:20px;height:20px}
-.logo-text{
-  font-weight:700;font-size:1rem;
-  letter-spacing:-0.02em;
+.branding-brain{
+  width:52px;height:52px;
+  margin-bottom:6px;
+  filter:drop-shadow(0 0 12px rgba(124,106,255,0.4));
+}
+.branding-name{
+  font-family:'Inter',system-ui,sans-serif;
+  font-weight:300;font-size:1.5rem;
+  letter-spacing:0.25em;
+  color:#f0f0f5;
+  text-shadow:0 0 20px rgba(255,255,255,0.1);
+  margin-bottom:4px;
+}
+.branding-slogan{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.65rem;
+  letter-spacing:0.15em;
+  color:var(--text-dim);
+  text-transform:uppercase;
 }
 
 /* Replay button */
@@ -237,17 +252,46 @@ canvas#scene{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1}
   <div class="cine-bar top" id="cineTop"></div>
   <div class="cine-bar bottom" id="cineBottom"></div>
 
-  <!-- Logo -->
-  <div class="logo" id="logo">
-    <div class="logo-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
-        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/>
-        <path d="M12 2c-2 3-3 6-3 10s1 7 3 10"/>
-        <path d="M12 2c2 3 3 6 3 10s-1 7-3 10"/>
-        <path d="M2 12h20"/>
-      </svg>
-    </div>
-    <span class="logo-text">UltraBrain</span>
+  <!-- Branding Header -->
+  <div class="branding" id="branding">
+    <img class="branding-econlab" src="data:image/png;base64,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" alt="EconLab AI"/>
+    <svg class="branding-brain" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="brand-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#3B82F6"/>
+          <stop offset="45%" stop-color="#6366F1"/>
+          <stop offset="100%" stop-color="#8B5CF6"/>
+        </linearGradient>
+        <linearGradient id="brand-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#93C5FD"/>
+          <stop offset="100%" stop-color="#C4B5FD"/>
+        </linearGradient>
+      </defs>
+      <path d="M93 20C58 20 16 52 16 100s42 80 77 80Z" fill="url(#brand-grad)" opacity=".95"/>
+      <path d="M107 20c35 0 77 32 77 80s-42 80-77 80Z" fill="url(#brand-grad)" opacity=".88"/>
+      <path d="M30 62Q54 73 87 66" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity=".30"/>
+      <path d="M26 100Q50 113 87 104" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity=".30"/>
+      <path d="M30 138Q54 148 87 142" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity=".30"/>
+      <path d="M170 62Q146 73 113 66" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity=".30"/>
+      <path d="M174 100Q150 113 113 104" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity=".30"/>
+      <path d="M170 138Q146 148 113 142" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity=".30"/>
+      <line x1="54" y1="54" x2="100" y2="100" stroke="white" stroke-width="1.2" opacity=".18"/>
+      <line x1="146" y1="54" x2="100" y2="100" stroke="white" stroke-width="1.2" opacity=".18"/>
+      <line x1="46" y1="100" x2="100" y2="100" stroke="white" stroke-width="1.2" opacity=".18"/>
+      <line x1="154" y1="100" x2="100" y2="100" stroke="white" stroke-width="1.2" opacity=".18"/>
+      <line x1="54" y1="146" x2="100" y2="100" stroke="white" stroke-width="1.2" opacity=".15"/>
+      <line x1="146" y1="146" x2="100" y2="100" stroke="white" stroke-width="1.2" opacity=".15"/>
+      <circle cx="54" cy="54" r="4.5" fill="url(#brand-glow)" opacity=".85"/>
+      <circle cx="146" cy="54" r="4.5" fill="url(#brand-glow)" opacity=".85"/>
+      <circle cx="46" cy="100" r="3.5" fill="url(#brand-glow)" opacity=".75"/>
+      <circle cx="154" cy="100" r="3.5" fill="url(#brand-glow)" opacity=".75"/>
+      <circle cx="54" cy="146" r="3.5" fill="url(#brand-glow)" opacity=".70"/>
+      <circle cx="146" cy="146" r="3.5" fill="url(#brand-glow)" opacity=".70"/>
+      <circle cx="100" cy="100" r="6" fill="white" opacity=".92"/>
+      <circle cx="100" cy="100" r="3.5" fill="url(#brand-grad)" opacity=".6"/>
+    </svg>
+    <div class="branding-name">ULTRABRAIN</div>
+    <div class="branding-slogan">Persistent Semantic Memory for Claude Code</div>
   </div>
 
   <!-- Memory counter -->
@@ -275,8 +319,8 @@ canvas#scene{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1}
       <div class="stat-label">ms search latency</div>
     </div>
     <div class="stat">
-      <div class="stat-value" id="statTokens">0</div>
-      <div class="stat-label">% token savings</div>
+      <div class="stat-value" id="statTokens">0%</div>
+      <div class="stat-label">token savings</div>
     </div>
     <div class="stat">
       <div class="stat-value" id="statSetup">0</div>
@@ -561,7 +605,6 @@ const $terminal = document.getElementById('terminal');
 const $termCmd = document.getElementById('termCmd');
 const $memCounter = document.getElementById('memCounter');
 const $memCount = document.getElementById('memCount');
-const $logo = document.getElementById('logo');
 const $cineTop = document.getElementById('cineTop');
 const $cineBottom = document.getElementById('cineBottom');
 const $replay = document.getElementById('replayBtn');
@@ -578,17 +621,17 @@ function animateStats() {
   if (statsAnimated) return;
   statsAnimated = true;
   const targets = [
-    { el: $statSpeed, target: 1.3, decimals: 1, prefix: '<' },
-    { el: $statTokens, target: 80, decimals: 0, prefix: '' },
-    { el: $statSetup, target: 2, decimals: 0, prefix: '<' },
+    { el: $statSpeed, target: 1.3, decimals: 1, prefix: '<', suffix: '' },
+    { el: $statTokens, target: 80, decimals: 0, prefix: '', suffix: '%' },
+    { el: $statSetup, target: 2, decimals: 0, prefix: '<', suffix: '' },
   ];
-  targets.forEach(({ el, target, decimals, prefix }) => {
+  targets.forEach(({ el, target, decimals, prefix, suffix }) => {
     let current = 0;
     const step = target / 40;
     const interval = setInterval(() => {
       current += step;
       if (current >= target) { current = target; clearInterval(interval); }
-      el.textContent = prefix + current.toFixed(decimals);
+      el.textContent = prefix + current.toFixed(decimals) + suffix;
     }, 25);
   });
 }
@@ -605,7 +648,7 @@ function updateUI(elapsed) {
   $hook.className = 'phase phase-hook' + (p === 1 ? ' visible' : p > 1 ? ' exit' : '');
   $reveal.className = 'phase phase-reveal' + (p === 2 ? ' visible' : p > 2 ? ' exit' : '');
 
-  if (p >= 3) { $logo.classList.add('visible'); $memCounter.classList.add('visible'); }
+  if (p >= 3) { $memCounter.classList.add('visible'); }
   if (p >= 4) {
     $stats.classList.add('visible');
     $features.classList.add('visible');

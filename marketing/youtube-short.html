@@ -146,21 +146,38 @@ canvas#scene{position:absolute;top:0;left:0;width:100%;height:100%}
 }
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 
-/* Logo watermark */
-.logo-mark{
-  position:absolute;top:5%;left:50%;transform:translateX(-50%);
-  z-index:40;
-  display:flex;align-items:center;gap:8px;
-  opacity:0;transition:opacity 0.5s;
+/* Branding header */
+.branding{
+  position:absolute;top:0;left:0;width:100%;z-index:40;
+  display:flex;flex-direction:column;align-items:center;
+  padding:14px 12px 10px;
+  pointer-events:none;
+  background:linear-gradient(180deg,rgba(5,5,8,0.9) 0%,rgba(5,5,8,0.5) 60%,transparent 100%);
 }
-.logo-mark.visible{opacity:1}
-.logo-mark .icon{
-  width:28px;height:28px;
-  background:linear-gradient(135deg,var(--glow-purple),var(--glow-cyan));
-  border-radius:7px;display:flex;align-items:center;justify-content:center;
+.branding-econlab{
+  height:16px;width:auto;
+  opacity:0.6;margin-bottom:8px;
 }
-.logo-mark .icon svg{width:18px;height:18px}
-.logo-mark .name{font-weight:700;font-size:0.95rem;letter-spacing:-0.01em}
+.branding-brain{
+  width:40px;height:40px;
+  margin-bottom:4px;
+  filter:drop-shadow(0 0 10px rgba(124,106,255,0.4));
+}
+.branding-name{
+  font-family:'Inter',system-ui,sans-serif;
+  font-weight:300;font-size:clamp(0.9rem,3vh,1.3rem);
+  letter-spacing:0.25em;
+  color:#f0f0f5;
+  text-shadow:0 0 20px rgba(255,255,255,0.1);
+  margin-bottom:2px;
+}
+.branding-slogan{
+  font-family:'JetBrains Mono',monospace;
+  font-size:clamp(0.4rem,1.2vh,0.55rem);
+  letter-spacing:0.12em;
+  color:rgba(255,255,255,0.35);
+  text-transform:uppercase;
+}
 
 /* CTA overlay */
 .cta-overlay{
@@ -253,17 +270,46 @@ canvas#scene{position:absolute;top:0;left:0;width:100%;height:100%}
   <canvas id="scene"></canvas>
   <div class="progress" id="progress"></div>
 
-  <!-- Logo -->
-  <div class="logo-mark" id="logo">
-    <div class="icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M12 2c-2 3-3 6-3 10s1 7 3 10"/>
-        <path d="M12 2c2 3 3 6 3 10s-1 7-3 10"/>
-        <path d="M2 12h20"/>
-      </svg>
-    </div>
-    <span class="name">UltraBrain</span>
+  <!-- Branding Header -->
+  <div class="branding" id="branding">
+    <img class="branding-econlab" src="data:image/png;base64,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" alt="EconLab AI"/>
+    <svg class="branding-brain" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="brand-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#3B82F6"/>
+          <stop offset="45%" stop-color="#6366F1"/>
+          <stop offset="100%" stop-color="#8B5CF6"/>
+        </linearGradient>
+        <linearGradient id="brand-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#93C5FD"/>
+          <stop offset="100%" stop-color="#C4B5FD"/>
+        </linearGradient>
+      </defs>
+      <path d="M93 20C58 20 16 52 16 100s42 80 77 80Z" fill="url(#brand-grad)" opacity=".95"/>
+      <path d="M107 20c35 0 77 32 77 80s-42 80-77 80Z" fill="url(#brand-grad)" opacity=".88"/>
+      <path d="M30 62Q54 73 87 66" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity=".30"/>
+      <path d="M26 100Q50 113 87 104" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity=".30"/>
+      <path d="M30 138Q54 148 87 142" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity=".30"/>
+      <path d="M170 62Q146 73 113 66" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity=".30"/>
+      <path d="M174 100Q150 113 113 104" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity=".30"/>
+      <path d="M170 138Q146 148 113 142" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity=".30"/>
+      <line x1="54" y1="54" x2="100" y2="100" stroke="white" stroke-width="1.2" opacity=".18"/>
+      <line x1="146" y1="54" x2="100" y2="100" stroke="white" stroke-width="1.2" opacity=".18"/>
+      <line x1="46" y1="100" x2="100" y2="100" stroke="white" stroke-width="1.2" opacity=".18"/>
+      <line x1="154" y1="100" x2="100" y2="100" stroke="white" stroke-width="1.2" opacity=".18"/>
+      <line x1="54" y1="146" x2="100" y2="100" stroke="white" stroke-width="1.2" opacity=".15"/>
+      <line x1="146" y1="146" x2="100" y2="100" stroke="white" stroke-width="1.2" opacity=".15"/>
+      <circle cx="54" cy="54" r="4.5" fill="url(#brand-glow)" opacity=".85"/>
+      <circle cx="146" cy="54" r="4.5" fill="url(#brand-glow)" opacity=".85"/>
+      <circle cx="46" cy="100" r="3.5" fill="url(#brand-glow)" opacity=".75"/>
+      <circle cx="154" cy="100" r="3.5" fill="url(#brand-glow)" opacity=".75"/>
+      <circle cx="54" cy="146" r="3.5" fill="url(#brand-glow)" opacity=".70"/>
+      <circle cx="146" cy="146" r="3.5" fill="url(#brand-glow)" opacity=".70"/>
+      <circle cx="100" cy="100" r="6" fill="white" opacity=".92"/>
+      <circle cx="100" cy="100" r="3.5" fill="url(#brand-grad)" opacity=".6"/>
+    </svg>
+    <div class="branding-name">ULTRABRAIN</div>
+    <div class="branding-slogan">Persistent Semantic Memory for Claude Code</div>
   </div>
 
   <!-- Subtitle area -->
@@ -552,7 +598,6 @@ let currentSubIdx = -1;
 
 const $sub = document.getElementById('subtitle');
 const $progress = document.getElementById('progress');
-const $logo = document.getElementById('logo');
 const $cta = document.getElementById('cta');
 
 // Visual phases based on elapsed time
@@ -664,7 +709,7 @@ function animate() {
   updateSubtitles(elapsed);
 
   // Logo - show after 13s
-  if (elapsed > 13500) $logo.classList.add('visible');
+  // Branding is always visible from the start
 
   // CTA - show at end
   if (elapsed > 33000) $cta.classList.add('visible');
