@@ -194,11 +194,9 @@ canvas#scene{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1}
   position:fixed;top:0;left:0;width:100%;z-index:20;
   display:flex;flex-direction:column;align-items:center;
   padding:18px 20px 14px;
-  opacity:0;transition:opacity 0.8s ease;
   pointer-events:none;
   background:linear-gradient(180deg,rgba(5,5,8,0.85) 0%,rgba(5,5,8,0.4) 70%,transparent 100%);
 }
-.branding.visible{opacity:1}
 .branding-econlab{
   height:20px;width:auto;
   opacity:0.6;margin-bottom:10px;
@@ -607,7 +605,6 @@ const $terminal = document.getElementById('terminal');
 const $termCmd = document.getElementById('termCmd');
 const $memCounter = document.getElementById('memCounter');
 const $memCount = document.getElementById('memCount');
-const $branding = document.getElementById('branding');
 const $cineTop = document.getElementById('cineTop');
 const $cineBottom = document.getElementById('cineBottom');
 const $replay = document.getElementById('replayBtn');
@@ -651,7 +648,7 @@ function updateUI(elapsed) {
   $hook.className = 'phase phase-hook' + (p === 1 ? ' visible' : p > 1 ? ' exit' : '');
   $reveal.className = 'phase phase-reveal' + (p === 2 ? ' visible' : p > 2 ? ' exit' : '');
 
-  if (p >= 3) { $branding.classList.add('visible'); $memCounter.classList.add('visible'); }
+  if (p >= 3) { $memCounter.classList.add('visible'); }
   if (p >= 4) {
     $stats.classList.add('visible');
     $features.classList.add('visible');

@@ -151,11 +151,9 @@ canvas#scene{position:absolute;top:0;left:0;width:100%;height:100%}
   position:absolute;top:0;left:0;width:100%;z-index:40;
   display:flex;flex-direction:column;align-items:center;
   padding:14px 12px 10px;
-  opacity:0;transition:opacity 0.8s ease;
   pointer-events:none;
   background:linear-gradient(180deg,rgba(5,5,8,0.9) 0%,rgba(5,5,8,0.5) 60%,transparent 100%);
 }
-.branding.visible{opacity:1}
 .branding-econlab{
   height:16px;width:auto;
   opacity:0.6;margin-bottom:8px;
@@ -600,7 +598,6 @@ let currentSubIdx = -1;
 
 const $sub = document.getElementById('subtitle');
 const $progress = document.getElementById('progress');
-const $branding = document.getElementById('branding');
 const $cta = document.getElementById('cta');
 
 // Visual phases based on elapsed time
@@ -712,7 +709,7 @@ function animate() {
   updateSubtitles(elapsed);
 
   // Logo - show after 13s
-  if (elapsed > 13500) $branding.classList.add('visible');
+  // Branding is always visible from the start
 
   // CTA - show at end
   if (elapsed > 33000) $cta.classList.add('visible');
