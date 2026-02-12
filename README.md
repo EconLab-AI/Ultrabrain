@@ -311,14 +311,14 @@ Browse and edit all 7 tiers of the CLAUDE.md hierarchy per project — from mana
 ### Ralph Loop (Autonomous Iteration)
 Launch autonomous Claude sessions directly from the web UI. Configure a task description, set iteration limits and success criteria, then click Start — UltraBrain opens Terminal.app with `claude --dangerously-skip-permissions` pointed at your project directory. Ideal for repetitive tasks, multi-step refactors, and overnight batch work.
 
-### Auto-Tagging & Classification
-The **AutoLabeler** automatically classifies every observation with semantic tags based on content analysis. 13 built-in system tags: `bug`, `todo`, `idea`, `learning`, `decision`, `feature`, `fix`, `refactor`, `performance`, `security`, `devops`, `docs`, `planned-feature`. The **KanbanPopulator** converts tagged observations into actionable Kanban tasks automatically.
+### Auto-Tagging & Smart Task Creation
+The **AutoLabeler** automatically classifies every observation with semantic tags based on content analysis. 13 built-in system tags: `bug`, `todo`, `idea`, `learning`, `decision`, `feature`, `fix`, `refactor`, `performance`, `security`, `devops`, `docs`, `planned-feature`. The **KanbanPopulator** intelligently converts tagged observations into Kanban tasks — only genuinely actionable items (discovered bugs, explicit TODOs) become tasks, while past-tense observations (completed fixes, already-built features) are correctly skipped.
 
 ### Agent Teams Dashboard
 Monitor and manage multi-agent team sessions. View active teams, their tasks, and coordination status across your projects.
 
 ### Claude Desktop Integration
-Two-way integration: **MCP Bridge** for real-time knowledge sharing between Claude Desktop and Claude Code, plus **Local Session Import** to bring your entire Claude Desktop conversation history into UltraBrain. All sessions, prompts, and metadata are preserved.
+Two-way integration: **MCP Bridge** for real-time knowledge sharing between Claude Desktop and Claude Code, plus **Local Session Import** to bring your entire Claude Desktop conversation history into UltraBrain. All sessions, conversation prompts, and metadata are preserved. The Claude Desktop viewer shows sessions organized by project with prompt counts, expandable conversation details, and one-click re-import.
 
 ### Semantic Vector Search
 LanceDB + all-MiniLM-L6-v2 embeddings find the most relevant memories, not just keyword matches. Search in <2ms.
@@ -358,7 +358,7 @@ The UltraBrain web dashboard at `http://localhost:37777` provides a comprehensiv
 | **Projects** | Browse all tracked projects with observation counts and activity timelines |
 | **Project Management** | Full PM suite: Overview, Current State, Bugs, Todos, Ideas, Learnings, Tags, Kanban |
 | **CLAUDE.md** | Visual editor for all CLAUDE.md files across the 7-tier hierarchy |
-| **Claude Desktop** | View imported Claude Desktop sessions with metadata and prompts |
+| **Claude Desktop** | Browse imported sessions organized by project, view conversation prompts, and re-import with one click |
 | **Ralph Loop** | Configure and launch autonomous Claude iteration loops |
 | **Agent Teams** | Monitor multi-agent team sessions and coordination |
 | **Feed** | Real-time stream of observations, summaries, and prompts with project filtering |

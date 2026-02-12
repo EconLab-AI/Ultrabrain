@@ -1,21 +1,45 @@
 import { Database } from 'bun:sqlite';
 import { logger } from '../../utils/logger.js';
+import { isDuplicate } from './TaskLifecycleManager.js';
+
+/**
+ * Determine if an observation should create a Kanban task.
+ * Past-tense observation types (bugfix, change, feature, refactor) describe
+ * already-completed work and should NOT generate tasks.
+ */
+function shouldCreateTask(obsType: string, tags: string[]): boolean {
+  // Past-tense types: work was already done — never create tasks
+  if (['bugfix', 'change', 'feature', 'refactor'].includes(obsType)) return false;
+
+  // Explicit TODO/FIXME markers — always create tasks
+  if (tags.includes('todo')) return true;
+
+  // Discovery + bug pattern = found unfixed bug — create task
+  if (obsType === 'discovery' && tags.includes('bug')) return true;
+
+  return false;
+}
 
 export function backfillKanbanFromExistingObservations(db: Database, project: string): number {
-  // Get all tagged observations that don't have kanban tasks yet
+  // Get all tagged observations that don't have kanban tasks yet, including obs type
   const tagged = db.prepare(`
-    SELECT o.id, o.title, o.project, GROUP_CONCAT(t.name) as tags
+    SELECT o.id, o.title, o.type, o.project, GROUP_CONCAT(t.name) as tags
     FROM observations o
     JOIN item_tags it ON o.id = it.item_id AND it.item_type = 'observation'
     JOIN tags t ON t.id = it.tag_id
     WHERE o.project = ? AND t.name IN ('bug', 'todo', 'feature')
     AND o.id NOT IN (SELECT observation_id FROM tasks WHERE observation_id IS NOT NULL)
     GROUP BY o.id
-  `).all(project) as { id: number; title: string | null; project: string; tags: string }[];
+  `).all(project) as { id: number; title: string | null; type: string; project: string; tags: string }[];
 
   let created = 0;
   for (const obs of tagged) {
-    populateKanbanFromObservation(db, obs.id, obs.tags.split(','), obs.title, obs.project);
+    const tags = obs.tags.split(',');
+    if (!shouldCreateTask(obs.type || '', tags)) {
+      logger.debug('KANBAN', `Skipped non-actionable observation #${obs.id} (type=${obs.type})`, { project });
+      continue;
+    }
+    populateKanbanFromObservation(db, obs.id, tags, obs.title, obs.project, obs.type || '');
     created++;
   }
 
@@ -28,11 +52,18 @@ export function populateKanbanFromObservation(
   observationId: number,
   tagNames: string[],
   title: string | null,
-  project: string
+  project: string,
+  obsType: string = ''
 ): void {
   // Only create tasks for actionable tags
   const actionableTags = tagNames.filter(t => ['bug', 'todo', 'feature'].includes(t));
   if (actionableTags.length === 0) return;
+
+  // Gate: only create tasks for genuinely actionable observations
+  if (!shouldCreateTask(obsType, actionableTags)) {
+    logger.debug('KANBAN', `Skipped non-actionable observation #${observationId} (type=${obsType})`, { project });
+    return;
+  }
 
   // Check if task already exists for this observation
   const existing = db.prepare(
@@ -48,6 +79,12 @@ export function populateKanbanFromObservation(
 
   const now = Date.now();
   const taskTitle = title || `Auto: observation #${observationId}`;
+
+  // Duplicate prevention: skip if a similar open task already exists
+  if (isDuplicate(db, taskTitle, project)) {
+    logger.debug('KANBAN', `Skipped duplicate task: "${taskTitle}"`, { project });
+    return;
+  }
 
   try {
     db.prepare(`

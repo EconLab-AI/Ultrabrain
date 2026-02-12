@@ -28,6 +28,7 @@ interface KanbanViewProps {
 const COLUMNS = [
   { id: 'todo', label: 'TODO' },
   { id: 'in_progress', label: 'IN PROGRESS' },
+  { id: 'stale', label: 'STALE' },
   { id: 'done', label: 'DONE' },
 ] as const;
 
@@ -47,6 +48,7 @@ export function KanbanView({ currentProject, projects }: KanbanViewProps) {
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [backfillStatus, setBackfillStatus] = useState<string | null>(null);
+  const [bulkStatus, setBulkStatus] = useState<string | null>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
   const fetchTasks = useCallback(() => {
@@ -136,6 +138,77 @@ export function KanbanView({ currentProject, projects }: KanbanViewProps) {
     }
   }, [currentProject, projects, fetchTasks]);
 
+  const handleMarkStale = useCallback(async () => {
+    const project = currentProject || projects[0];
+    if (!project) return;
+    setBulkStatus('Marking stale...');
+    try {
+      const res = await fetch('/api/tasks/bulk-stale', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project, staleDays: 30 }),
+      });
+      const data = await res.json();
+      setBulkStatus(`Marked ${data.marked} task(s) as stale`);
+      fetchTasks();
+    } catch {
+      setBulkStatus('Mark stale failed');
+    }
+  }, [currentProject, projects, fetchTasks]);
+
+  const handleCloseStale = useCallback(async () => {
+    const project = currentProject || projects[0];
+    if (!project) return;
+    setBulkStatus('Closing stale...');
+    try {
+      const res = await fetch('/api/tasks/bulk-close', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project, status: 'stale' }),
+      });
+      const data = await res.json();
+      setBulkStatus(`Closed ${data.closed} stale task(s)`);
+      fetchTasks();
+    } catch {
+      setBulkStatus('Close stale failed');
+    }
+  }, [currentProject, projects, fetchTasks]);
+
+  const handleDeduplicate = useCallback(async () => {
+    const project = currentProject || projects[0];
+    if (!project) return;
+    setBulkStatus('Finding duplicates...');
+    try {
+      // Dry run first
+      const dryRes = await fetch('/api/tasks/deduplicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project, dryRun: true }),
+      });
+      const dryData = await dryRes.json();
+      const count = dryData.duplicates?.length || 0;
+      if (count === 0) {
+        setBulkStatus('No duplicates found');
+        return;
+      }
+      if (!confirm(`Found ${count} duplicate(s). Close them?`)) {
+        setBulkStatus(`Found ${count} duplicate(s) — cancelled`);
+        return;
+      }
+      // Execute
+      const res = await fetch('/api/tasks/deduplicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project, dryRun: false }),
+      });
+      const data = await res.json();
+      setBulkStatus(`Closed ${data.totalClosed} duplicate(s)`);
+      fetchTasks();
+    } catch {
+      setBulkStatus('Deduplicate failed');
+    }
+  }, [currentProject, projects, fetchTasks]);
+
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, task: Task) => {
     setDraggedTask(task);
@@ -180,9 +253,9 @@ export function KanbanView({ currentProject, projects }: KanbanViewProps) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <h2 className="kanban-title">Kanban Board</h2>
         </div>
-        <div className="kanban-controls">
-          {backfillStatus && (
-            <span style={{ fontSize: '0.75rem', opacity: 0.6, marginRight: '8px' }}>{backfillStatus}</span>
+        <div className="kanban-controls" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+          {(backfillStatus || bulkStatus) && (
+            <span style={{ fontSize: '0.72rem', opacity: 0.6, marginRight: '4px' }}>{bulkStatus || backfillStatus}</span>
           )}
           <button
             onClick={handleBackfill}
@@ -197,7 +270,52 @@ export function KanbanView({ currentProject, projects }: KanbanViewProps) {
             }}
             title="Create tasks from tagged observations"
           >
-            Populate from observations
+            Populate
+          </button>
+          <button
+            onClick={handleMarkStale}
+            style={{
+              background: 'none',
+              border: '1px solid var(--border-color, #333)',
+              borderRadius: '6px',
+              padding: '4px 10px',
+              fontSize: '0.72rem',
+              cursor: 'pointer',
+              color: '#f59e0b',
+            }}
+            title="Mark todos older than 30 days as stale"
+          >
+            Mark Stale
+          </button>
+          <button
+            onClick={handleCloseStale}
+            style={{
+              background: 'none',
+              border: '1px solid var(--border-color, #333)',
+              borderRadius: '6px',
+              padding: '4px 10px',
+              fontSize: '0.72rem',
+              cursor: 'pointer',
+              color: '#ef4444',
+            }}
+            title="Close all stale tasks"
+          >
+            Close Stale
+          </button>
+          <button
+            onClick={handleDeduplicate}
+            style={{
+              background: 'none',
+              border: '1px solid var(--border-color, #333)',
+              borderRadius: '6px',
+              padding: '4px 10px',
+              fontSize: '0.72rem',
+              cursor: 'pointer',
+              color: '#8b5cf6',
+            }}
+            title="Find and close duplicate tasks"
+          >
+            Deduplicate
           </button>
         </div>
       </div>
@@ -451,6 +569,7 @@ function TaskDetailModal({ task, onSave, onDelete, onClose }: TaskDetailModalPro
             >
               <option value="todo">Todo</option>
               <option value="in_progress">In Progress</option>
+              <option value="stale">Stale</option>
               <option value="done">Done</option>
             </select>
           </div>

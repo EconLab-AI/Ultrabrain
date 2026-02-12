@@ -11,6 +11,16 @@ interface SdkSession {
   status: string;
   observation_count: number;
   summary_count: number;
+  prompt_count: number;
+}
+
+interface UserPrompt {
+  id: number;
+  content_session_id: string;
+  prompt_number: number;
+  prompt_text: string;
+  created_at: string;
+  created_at_epoch: number;
 }
 
 interface ClaudeDesktopViewProps {
@@ -55,8 +65,7 @@ export function ClaudeDesktopView({ projects }: ClaudeDesktopViewProps) {
   const [loading, setLoading] = useState(true);
   const [filterProject, setFilterProject] = useState('');
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [expandedObs, setExpandedObs] = useState<any[]>([]);
-  const [expandedSummary, setExpandedSummary] = useState<any | null>(null);
+  const [expandedPrompts, setExpandedPrompts] = useState<UserPrompt[]>([]);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<string | null>(null);
 
@@ -83,36 +92,19 @@ export function ClaudeDesktopView({ projects }: ClaudeDesktopViewProps) {
   const toggleExpand = useCallback((session: SdkSession) => {
     if (expandedId === session.id) {
       setExpandedId(null);
-      setExpandedObs([]);
-      setExpandedSummary(null);
+      setExpandedPrompts([]);
       return;
     }
     setExpandedId(session.id);
-    setExpandedObs([]);
-    setExpandedSummary(null);
+    setExpandedPrompts([]);
 
-    // Fetch observations for this session
-    if (session.memory_session_id) {
-      fetch(`/api/observations?project=${encodeURIComponent(session.project)}&limit=50`)
-        .then(res => res.json())
-        .then(data => {
-          const obs = (data.observations || []).filter(
-            (o: any) => o.memory_session_id === session.memory_session_id
-          );
-          setExpandedObs(obs);
-        })
-        .catch(() => {});
-
-      fetch(`/api/summaries?project=${encodeURIComponent(session.project)}&limit=50`)
-        .then(res => res.json())
-        .then(data => {
-          const sum = (data.summaries || []).find(
-            (s: any) => s.session_id === session.memory_session_id
-          );
-          setExpandedSummary(sum || null);
-        })
-        .catch(() => {});
-    }
+    // Fetch conversation prompts for this session
+    fetch(`/api/claude-desktop/sessions/${encodeURIComponent(session.content_session_id)}/prompts`)
+      .then(res => res.json())
+      .then(data => {
+        setExpandedPrompts(data.prompts || []);
+      })
+      .catch(() => {});
   }, [expandedId]);
 
   const handleImport = useCallback(async () => {
@@ -121,7 +113,7 @@ export function ClaudeDesktopView({ projects }: ClaudeDesktopViewProps) {
     try {
       const res = await fetch('/api/claude-desktop/import', { method: 'POST' });
       const data = await res.json();
-      setImportResult(`Imported ${data.imported || 0} sessions`);
+      setImportResult(`Imported ${data.sessionsImported || 0} sessions, ${data.promptsImported || 0} prompts`);
       fetchSessions();
     } catch {
       setImportResult('Import failed');
@@ -169,6 +161,19 @@ export function ClaudeDesktopView({ projects }: ClaudeDesktopViewProps) {
               <option key={p} value={p}>{p}</option>
             ))}
           </select>
+          <button
+            className="cd-refresh-btn"
+            onClick={handleImport}
+            disabled={importing}
+            title="Re-import from Claude Desktop"
+            style={{ opacity: importing ? 0.5 : 1 }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </button>
           <button className="cd-refresh-btn" onClick={fetchSessions} title="Refresh">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" />
@@ -243,8 +248,9 @@ export function ClaudeDesktopView({ projects }: ClaudeDesktopViewProps) {
                   </div>
                 </div>
                 <div className="cd-session-counts">
-                  <span className="cd-count-badge" title="Observations">{session.observation_count} obs</span>
-                  <span className="cd-count-badge" title="Summaries">{session.summary_count} sum</span>
+                  <span className="cd-count-badge" title="Conversation messages">
+                    {session.prompt_count || 0} prompts
+                  </span>
                   <svg
                     width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
@@ -281,39 +287,29 @@ export function ClaudeDesktopView({ projects }: ClaudeDesktopViewProps) {
                     </div>
                   )}
 
-                  {expandedObs.length > 0 && (
+                  {expandedPrompts.length > 0 && (
                     <div className="cd-detail-section">
-                      <div className="cd-detail-label">Observations ({expandedObs.length})</div>
+                      <div className="cd-detail-label">Conversation ({expandedPrompts.length} messages)</div>
                       <div className="cd-obs-list">
-                        {expandedObs.map((obs: any) => (
-                          <div key={obs.id} className="cd-obs-item">
-                            <span className="cd-obs-type">{obs.type}</span>
-                            <span className="cd-obs-title">{obs.title || obs.text?.slice(0, 80) || '—'}</span>
+                        {expandedPrompts.map((prompt) => (
+                          <div key={prompt.id} className="cd-obs-item">
+                            <span className="cd-obs-type">#{prompt.prompt_number}</span>
+                            <span className="cd-obs-title">
+                              {prompt.prompt_text.length > 200
+                                ? prompt.prompt_text.slice(0, 200) + '...'
+                                : prompt.prompt_text}
+                            </span>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {expandedSummary && (
+                  {expandedPrompts.length === 0 && expandedId === session.id && (
                     <div className="cd-detail-section">
-                      <div className="cd-detail-label">Summary</div>
-                      <div className="cd-summary-content">
-                        {expandedSummary.request && (
-                          <div className="cd-summary-field">
-                            <span className="cd-summary-key">Request:</span> {expandedSummary.request}
-                          </div>
-                        )}
-                        {expandedSummary.completed && (
-                          <div className="cd-summary-field">
-                            <span className="cd-summary-key">Completed:</span> {expandedSummary.completed}
-                          </div>
-                        )}
-                        {expandedSummary.learned && (
-                          <div className="cd-summary-field">
-                            <span className="cd-summary-key">Learned:</span> {expandedSummary.learned}
-                          </div>
-                        )}
+                      <div className="cd-detail-label">Conversation</div>
+                      <div className="cd-detail-value" style={{ opacity: 0.5 }}>
+                        No conversation messages imported yet. Try re-importing.
                       </div>
                     </div>
                   )}

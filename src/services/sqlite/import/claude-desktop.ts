@@ -247,10 +247,11 @@ export async function importClaudeDesktopSessions(
 
       if (!result.imported) {
         stats.sessionsSkipped++;
-        continue;
+      } else {
+        stats.sessionsImported++;
       }
 
-      stats.sessionsImported++;
+      // Always import prompts — idempotent via UNIQUE constraint in importUserPrompt
 
       // Extract and import user prompts from audit.jsonl
       const sessionDirName = metaFile.replace('.json', '');
