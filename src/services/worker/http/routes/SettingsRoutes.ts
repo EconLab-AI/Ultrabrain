@@ -17,6 +17,7 @@ import { ModeManager } from '../../domain/ModeManager.js';
 import { BaseRouteHandler } from '../BaseRouteHandler.js';
 import { SettingsDefaultsManager } from '../../../../shared/SettingsDefaultsManager.js';
 import { clearPortCache } from '../../../../shared/worker-utils.js';
+import { saveUltraBrainEnv, loadUltraBrainEnv } from '../../../../shared/EnvManager.js';
 
 export class SettingsRoutes extends BaseRouteHandler {
   constructor(
@@ -46,7 +47,27 @@ export class SettingsRoutes extends BaseRouteHandler {
   private handleGetSettings = this.wrapHandler((req: Request, res: Response): void => {
     const settingsPath = path.join(homedir(), '.ultrabrain', 'settings.json');
     this.ensureSettingsFile(settingsPath);
-    const settings = SettingsDefaultsManager.loadFromFile(settingsPath);
+    const settings: any = SettingsDefaultsManager.loadFromFile(settingsPath);
+
+    // Merge API keys from .env (source of truth for credentials)
+    try {
+      const envCredentials = loadUltraBrainEnv();
+      if (envCredentials.ANTHROPIC_API_KEY) {
+        settings.ULTRABRAIN_ANTHROPIC_API_KEY = envCredentials.ANTHROPIC_API_KEY;
+      }
+      if (envCredentials.GEMINI_API_KEY) {
+        settings.ULTRABRAIN_GEMINI_API_KEY = envCredentials.GEMINI_API_KEY;
+      }
+      if (envCredentials.OPENROUTER_API_KEY) {
+        settings.ULTRABRAIN_OPENROUTER_API_KEY = envCredentials.OPENROUTER_API_KEY;
+      }
+      if (envCredentials.GROQ_API_KEY) {
+        settings.ULTRABRAIN_GROQ_API_KEY = envCredentials.GROQ_API_KEY;
+      }
+    } catch {
+      // .env read failed, use settings.json values
+    }
+
     res.json(settings);
   });
 
@@ -91,6 +112,8 @@ export class SettingsRoutes extends BaseRouteHandler {
       'ULTRABRAIN_WORKER_HOST',
       // AI Provider Configuration
       'ULTRABRAIN_PROVIDER',
+      'ULTRABRAIN_CLAUDE_AUTH_METHOD',
+      'ULTRABRAIN_ANTHROPIC_API_KEY',
       'ULTRABRAIN_GEMINI_API_KEY',
       'ULTRABRAIN_GEMINI_MODEL',
       'ULTRABRAIN_GEMINI_RATE_LIMITING_ENABLED',
@@ -101,6 +124,9 @@ export class SettingsRoutes extends BaseRouteHandler {
       'ULTRABRAIN_OPENROUTER_APP_NAME',
       'ULTRABRAIN_OPENROUTER_MAX_CONTEXT_MESSAGES',
       'ULTRABRAIN_OPENROUTER_MAX_TOKENS',
+      // Groq Configuration
+      'ULTRABRAIN_GROQ_API_KEY',
+      'ULTRABRAIN_GROQ_MODEL',
       // System Configuration
       'ULTRABRAIN_DATA_DIR',
       'ULTRABRAIN_LOG_LEVEL',
@@ -132,6 +158,29 @@ export class SettingsRoutes extends BaseRouteHandler {
 
     // Write back
     writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
+
+    // Sync API keys to ~/.ultrabrain/.env (where SDK reads them from)
+    try {
+      const envUpdate: Record<string, string | undefined> = {};
+      if (req.body.ULTRABRAIN_ANTHROPIC_API_KEY !== undefined) {
+        envUpdate.ANTHROPIC_API_KEY = req.body.ULTRABRAIN_ANTHROPIC_API_KEY || undefined;
+      }
+      if (req.body.ULTRABRAIN_GEMINI_API_KEY !== undefined) {
+        envUpdate.GEMINI_API_KEY = req.body.ULTRABRAIN_GEMINI_API_KEY || undefined;
+      }
+      if (req.body.ULTRABRAIN_OPENROUTER_API_KEY !== undefined) {
+        envUpdate.OPENROUTER_API_KEY = req.body.ULTRABRAIN_OPENROUTER_API_KEY || undefined;
+      }
+      if (req.body.ULTRABRAIN_GROQ_API_KEY !== undefined) {
+        envUpdate.GROQ_API_KEY = req.body.ULTRABRAIN_GROQ_API_KEY || undefined;
+      }
+      if (Object.keys(envUpdate).length > 0) {
+        saveUltraBrainEnv(envUpdate as any);
+        logger.info('SETTINGS', 'API keys synced to .env file');
+      }
+    } catch (envError) {
+      logger.warn('SETTINGS', 'Failed to sync API keys to .env', {}, envError as Error);
+    }
 
     // Clear port cache to force re-reading from updated settings
     clearPortCache();
@@ -237,6 +286,14 @@ export class SettingsRoutes extends BaseRouteHandler {
     const validProviders = ['claude', 'gemini', 'openrouter'];
     if (!validProviders.includes(settings.ULTRABRAIN_PROVIDER)) {
       return { valid: false, error: 'ULTRABRAIN_PROVIDER must be "claude", "gemini", or "openrouter"' };
+      }
+    }
+
+    // Validate ULTRABRAIN_CLAUDE_AUTH_METHOD
+    if (settings.ULTRABRAIN_CLAUDE_AUTH_METHOD) {
+      const validMethods = ['cli', 'api'];
+      if (!validMethods.includes(settings.ULTRABRAIN_CLAUDE_AUTH_METHOD)) {
+        return { valid: false, error: 'ULTRABRAIN_CLAUDE_AUTH_METHOD must be "cli" or "api"' };
       }
     }
 

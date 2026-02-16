@@ -3,19 +3,21 @@
  * Shared across UI components and hooks
  */
 export const DEFAULT_SETTINGS = {
-  ULTRABRAIN_MODEL: 'claude-sonnet-4-5',
+  ULTRABRAIN_MODEL: 'claude-haiku-4-5',
   ULTRABRAIN_CONTEXT_OBSERVATIONS: '50',
   ULTRABRAIN_WORKER_PORT: '37777',
   ULTRABRAIN_WORKER_HOST: '127.0.0.1',
 
   // AI Provider Configuration
-  ULTRABRAIN_PROVIDER: 'claude',
+  ULTRABRAIN_PROVIDER: 'groq',
   ULTRABRAIN_GEMINI_API_KEY: '',
   ULTRABRAIN_GEMINI_MODEL: 'gemini-2.5-flash-lite',
   ULTRABRAIN_OPENROUTER_API_KEY: '',
-  ULTRABRAIN_OPENROUTER_MODEL: 'xiaomi/mimo-v2-flash:free',
+  ULTRABRAIN_OPENROUTER_MODEL: 'deepseek/deepseek-r1-0528:free',
   ULTRABRAIN_OPENROUTER_SITE_URL: '',
   ULTRABRAIN_OPENROUTER_APP_NAME: 'ultrabrain',
+  ULTRABRAIN_GROQ_API_KEY: '',
+  ULTRABRAIN_GROQ_MODEL: 'openai/gpt-oss-120b',
   ULTRABRAIN_GEMINI_RATE_LIMITING_ENABLED: 'true',
 
   // Token Economics (all true for backwards compatibility)

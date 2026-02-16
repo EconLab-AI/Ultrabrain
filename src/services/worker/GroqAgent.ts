@@ -1,14 +1,17 @@
 /**
- * OpenRouterAgent: OpenRouter-based observation extraction
+ * GroqAgent: Groq-based observation extraction
  *
- * Alternative to SDKAgent that uses OpenRouter's unified API
- * for accessing 100+ models from different providers.
+ * Alternative to OpenRouterAgent that uses Groq's free tier API.
+ * Groq offers 14,400 req/day free with GPT-OSS 120B.
+ * UltraBrain only needs ~186 calls/day (1.3% of limit).
+ *
+ * API is OpenAI-compatible, identical format to OpenRouter.
  *
  * Responsibility:
- * - Call OpenRouter REST API for observation extraction
- * - Parse XML responses (same format as Claude/Gemini)
+ * - Call Groq REST API for observation extraction
+ * - Parse XML responses (same format as Claude/Gemini/OpenRouter)
  * - Sync to database and LanceDB
- * - Support dynamic model selection across providers
+ * - Support dynamic model selection
  */
 
 import { DatabaseManager } from './DatabaseManager.js';
@@ -28,8 +31,8 @@ import {
   type FallbackAgent
 } from './agents/index.js';
 
-// OpenRouter API endpoint
-const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+// Groq API endpoint (OpenAI-compatible)
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 // Context window management constants (defaults, overridable via settings)
 const DEFAULT_MAX_CONTEXT_MESSAGES = 20;  // Maximum messages to keep in conversation history
@@ -42,7 +45,7 @@ interface OpenAIMessage {
   content: string;
 }
 
-interface OpenRouterResponse {
+interface GroqResponse {
   choices?: Array<{
     message?: {
       role?: string;
@@ -61,7 +64,7 @@ interface OpenRouterResponse {
   };
 }
 
-export class OpenRouterAgent {
+export class GroqAgent {
   private dbManager: DatabaseManager;
   private sessionManager: SessionManager;
   private fallbackAgent: FallbackAgent | null = null;
@@ -72,7 +75,7 @@ export class OpenRouterAgent {
   }
 
   /**
-   * Set the fallback agent (Claude SDK) for when OpenRouter API fails
+   * Set the fallback agent (Claude SDK) for when Groq API fails
    * Must be set after construction to avoid circular dependency
    */
   setFallbackAgent(agent: FallbackAgent): void {
@@ -80,24 +83,24 @@ export class OpenRouterAgent {
   }
 
   /**
-   * Start OpenRouter agent for a session
+   * Start Groq agent for a session
    * Uses multi-turn conversation to maintain context across messages
    */
   async startSession(session: ActiveSession, worker?: WorkerRef): Promise<void> {
     try {
-      // Get OpenRouter configuration
-      const { apiKey, model, siteUrl, appName } = this.getOpenRouterConfig();
+      // Get Groq configuration
+      const { apiKey, model } = this.getGroqConfig();
 
       if (!apiKey) {
-        throw new Error('OpenRouter API key not configured. Set ULTRABRAIN_OPENROUTER_API_KEY in settings or OPENROUTER_API_KEY environment variable.');
+        throw new Error('Groq API key not configured. Set ULTRABRAIN_GROQ_API_KEY in settings or GROQ_API_KEY environment variable.');
       }
 
-      // Generate synthetic memorySessionId (OpenRouter is stateless, doesn't return session IDs)
+      // Generate synthetic memorySessionId (Groq is stateless, doesn't return session IDs)
       if (!session.memorySessionId) {
-        const syntheticMemorySessionId = `openrouter-${session.contentSessionId}-${Date.now()}`;
+        const syntheticMemorySessionId = `groq-${session.contentSessionId}-${Date.now()}`;
         session.memorySessionId = syntheticMemorySessionId;
         this.dbManager.getSessionStore().updateMemorySessionId(session.sessionDbId, syntheticMemorySessionId);
-        logger.info('SESSION', `MEMORY_ID_GENERATED | sessionDbId=${session.sessionDbId} | provider=OpenRouter`);
+        logger.info('SESSION', `MEMORY_ID_GENERATED | sessionDbId=${session.sessionDbId} | provider=Groq`);
       }
 
       // Load active mode
@@ -108,9 +111,9 @@ export class OpenRouterAgent {
         ? buildInitPrompt(session.project, session.contentSessionId, session.userPrompt, mode)
         : buildContinuationPrompt(session.userPrompt, session.lastPromptNumber, session.contentSessionId, mode);
 
-      // Add to conversation history and query OpenRouter with full context
+      // Add to conversation history and query Groq with full context
       session.conversationHistory.push({ role: 'user', content: initPrompt });
-      const initResponse = await this.queryOpenRouterMultiTurn(session.conversationHistory, apiKey, model, siteUrl, appName);
+      const initResponse = await this.queryGroqMultiTurn(session.conversationHistory, apiKey, model);
 
       if (initResponse.content) {
         // Add response to conversation history
@@ -130,11 +133,11 @@ export class OpenRouterAgent {
           worker,
           tokensUsed,
           null,
-          'OpenRouter',
+          'Groq',
           undefined  // No lastCwd yet - before message processing
         );
       } else {
-        logger.error('SDK', 'Empty OpenRouter init response - session may lack context', {
+        logger.error('SDK', 'Empty Groq init response - session may lack context', {
           sessionId: session.sessionDbId,
           model
         });
@@ -178,9 +181,9 @@ export class OpenRouterAgent {
             cwd: message.cwd
           });
 
-          // Add to conversation history and query OpenRouter with full context
+          // Add to conversation history and query Groq with full context
           session.conversationHistory.push({ role: 'user', content: obsPrompt });
-          const obsResponse = await this.queryOpenRouterMultiTurn(session.conversationHistory, apiKey, model, siteUrl, appName);
+          const obsResponse = await this.queryGroqMultiTurn(session.conversationHistory, apiKey, model);
 
           let tokensUsed = 0;
           if (obsResponse.content) {
@@ -201,7 +204,7 @@ export class OpenRouterAgent {
             worker,
             tokensUsed,
             originalTimestamp,
-            'OpenRouter',
+            'Groq',
             lastCwd
           );
 
@@ -220,9 +223,9 @@ export class OpenRouterAgent {
             last_assistant_message: message.last_assistant_message || ''
           }, mode);
 
-          // Add to conversation history and query OpenRouter with full context
+          // Add to conversation history and query Groq with full context
           session.conversationHistory.push({ role: 'user', content: summaryPrompt });
-          const summaryResponse = await this.queryOpenRouterMultiTurn(session.conversationHistory, apiKey, model, siteUrl, appName);
+          const summaryResponse = await this.queryGroqMultiTurn(session.conversationHistory, apiKey, model);
 
           let tokensUsed = 0;
           if (summaryResponse.content) {
@@ -243,7 +246,7 @@ export class OpenRouterAgent {
             worker,
             tokensUsed,
             originalTimestamp,
-            'OpenRouter',
+            'Groq',
             lastCwd
           );
         }
@@ -251,7 +254,7 @@ export class OpenRouterAgent {
 
       // Mark session complete
       const sessionDuration = Date.now() - session.startTime;
-      logger.success('SDK', 'OpenRouter agent completed', {
+      logger.success('SDK', 'Groq agent completed', {
         sessionId: session.sessionDbId,
         duration: `${(sessionDuration / 1000).toFixed(1)}s`,
         historyLength: session.conversationHistory.length,
@@ -260,24 +263,23 @@ export class OpenRouterAgent {
 
     } catch (error: unknown) {
       if (isAbortError(error)) {
-        logger.warn('SDK', 'OpenRouter agent aborted', { sessionId: session.sessionDbId });
+        logger.warn('SDK', 'Groq agent aborted', { sessionId: session.sessionDbId });
         throw error;
       }
 
       // Check if we should fall back to Claude
       if (shouldFallbackToClaude(error) && this.fallbackAgent) {
-        logger.warn('SDK', 'OpenRouter API failed, falling back to Claude SDK', {
+        logger.warn('SDK', 'Groq API failed, falling back to Claude SDK', {
           sessionDbId: session.sessionDbId,
           error: error instanceof Error ? error.message : String(error),
           historyLength: session.conversationHistory.length
         });
 
         // Fall back to Claude - it will use the same session with shared conversationHistory
-        // Note: With claim-and-delete queue pattern, messages are already deleted on claim
         return this.fallbackAgent.startSession(session, worker);
       }
 
-      logger.failure('SDK', 'OpenRouter agent error', { sessionDbId: session.sessionDbId }, error as Error);
+      logger.failure('SDK', 'Groq agent error', { sessionDbId: session.sessionDbId }, error as Error);
       throw error;
     }
   }
@@ -345,15 +347,13 @@ export class OpenRouterAgent {
   }
 
   /**
-   * Query OpenRouter via REST API with full conversation history (multi-turn)
+   * Query Groq via REST API with full conversation history (multi-turn)
    * Sends the entire conversation context for coherent responses
    */
-  private async queryOpenRouterMultiTurn(
+  private async queryGroqMultiTurn(
     history: ConversationMessage[],
     apiKey: string,
-    model: string,
-    siteUrl?: string,
-    appName?: string
+    model: string
   ): Promise<{ content: string; tokensUsed?: number }> {
     // Truncate history to prevent runaway costs
     const truncatedHistory = this.truncateHistory(history);
@@ -361,18 +361,16 @@ export class OpenRouterAgent {
     const totalChars = truncatedHistory.reduce((sum, m) => sum + m.content.length, 0);
     const estimatedTokens = this.estimateTokens(truncatedHistory.map(m => m.content).join(''));
 
-    logger.debug('SDK', `Querying OpenRouter multi-turn (${model})`, {
+    logger.debug('SDK', `Querying Groq multi-turn (${model})`, {
       turns: truncatedHistory.length,
       totalChars,
       estimatedTokens
     });
 
-    const response = await fetch(OPENROUTER_API_URL, {
+    const response = await fetch(GROQ_API_URL, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': siteUrl || 'https://github.com/EconLab-AI/Ultrabrain',
-        'X-Title': appName || 'ultrabrain',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -385,45 +383,42 @@ export class OpenRouterAgent {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
+      throw new Error(`Groq API error: ${response.status} - ${errorText}`);
     }
 
-    const data = await response.json() as OpenRouterResponse;
+    const data = await response.json() as GroqResponse;
 
     // Check for API error in response body
     if (data.error) {
-      throw new Error(`OpenRouter API error: ${data.error.code} - ${data.error.message}`);
+      throw new Error(`Groq API error: ${data.error.code} - ${data.error.message}`);
     }
 
     if (!data.choices?.[0]?.message?.content) {
-      logger.error('SDK', 'Empty response from OpenRouter');
+      logger.error('SDK', 'Empty response from Groq');
       return { content: '' };
     }
 
     const content = data.choices[0].message.content;
     const tokensUsed = data.usage?.total_tokens;
 
-    // Log actual token usage for cost tracking
+    // Log actual token usage (Groq free tier - no cost)
     if (tokensUsed) {
       const inputTokens = data.usage?.prompt_tokens || 0;
       const outputTokens = data.usage?.completion_tokens || 0;
-      // Token usage (cost varies by model - many OpenRouter models are free)
-      const estimatedCost = (inputTokens / 1000000 * 3) + (outputTokens / 1000000 * 15);
 
-      logger.info('SDK', 'OpenRouter API usage', {
+      logger.info('SDK', 'Groq API usage', {
         model,
         inputTokens,
         outputTokens,
         totalTokens: tokensUsed,
-        estimatedCostUSD: estimatedCost.toFixed(4),
+        cost: 'free',
         messagesInContext: truncatedHistory.length
       });
 
-      // Warn if costs are getting high
+      // Warn if token usage is very high (context growing)
       if (tokensUsed > 50000) {
         logger.warn('SDK', 'High token usage detected - consider reducing context', {
-          totalTokens: tokensUsed,
-          estimatedCost: estimatedCost.toFixed(4)
+          totalTokens: tokensUsed
         });
       }
     }
@@ -432,43 +427,36 @@ export class OpenRouterAgent {
   }
 
   /**
-   * Get OpenRouter configuration from settings or environment
-   * Issue #733: Uses centralized ~/.ultrabrain/.env for credentials, not random project .env files
+   * Get Groq configuration from settings or environment
    */
-  private getOpenRouterConfig(): { apiKey: string; model: string; siteUrl?: string; appName?: string } {
+  private getGroqConfig(): { apiKey: string; model: string } {
     const settingsPath = USER_SETTINGS_PATH;
     const settings = SettingsDefaultsManager.loadFromFile(settingsPath);
 
-    // API key: check settings first, then centralized ultrabrain .env (NOT process.env)
-    // This prevents Issue #733 where random project .env files could interfere
-    const apiKey = settings.ULTRABRAIN_OPENROUTER_API_KEY || getCredential('OPENROUTER_API_KEY') || '';
+    // API key: check settings first, then centralized ultrabrain .env
+    const apiKey = settings.ULTRABRAIN_GROQ_API_KEY || getCredential('GROQ_API_KEY') || '';
 
     // Model: from settings or default
-    const model = settings.ULTRABRAIN_OPENROUTER_MODEL || 'deepseek/deepseek-r1-0528:free';
+    const model = settings.ULTRABRAIN_GROQ_MODEL || 'openai/gpt-oss-120b';
 
-    // Optional analytics headers
-    const siteUrl = settings.ULTRABRAIN_OPENROUTER_SITE_URL || '';
-    const appName = settings.ULTRABRAIN_OPENROUTER_APP_NAME || 'ultrabrain';
-
-    return { apiKey, model, siteUrl, appName };
+    return { apiKey, model };
   }
 }
 
 /**
- * Check if OpenRouter is available (has API key configured)
- * Issue #733: Uses centralized ~/.ultrabrain/.env, not random project .env files
+ * Check if Groq is available (has API key configured)
  */
-export function isOpenRouterAvailable(): boolean {
+export function isGroqAvailable(): boolean {
   const settingsPath = USER_SETTINGS_PATH;
   const settings = SettingsDefaultsManager.loadFromFile(settingsPath);
-  return !!(settings.ULTRABRAIN_OPENROUTER_API_KEY || getCredential('OPENROUTER_API_KEY'));
+  return !!(settings.ULTRABRAIN_GROQ_API_KEY || getCredential('GROQ_API_KEY'));
 }
 
 /**
- * Check if OpenRouter is the selected provider
+ * Check if Groq is the selected provider
  */
-export function isOpenRouterSelected(): boolean {
+export function isGroqSelected(): boolean {
   const settingsPath = USER_SETTINGS_PATH;
   const settings = SettingsDefaultsManager.loadFromFile(settingsPath);
-  return settings.ULTRABRAIN_PROVIDER === 'openrouter';
+  return settings.ULTRABRAIN_PROVIDER === 'groq';
 }

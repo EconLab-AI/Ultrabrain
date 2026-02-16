@@ -32,5 +32,8 @@ src/ui/viewer.html
 /http*/
 /https*/
 
+# Test artifacts
+test-results/
+
 # Ignore WebStorm project files (for dinosaur IDE users)
 .idea/

@@ -52,6 +52,7 @@ export const MANAGED_CREDENTIAL_KEYS = [
   'ANTHROPIC_API_KEY',
   'GEMINI_API_KEY',
   'OPENROUTER_API_KEY',
+  'GROQ_API_KEY',
 ];
 
 export interface UltraBrainEnv {
@@ -59,6 +60,7 @@ export interface UltraBrainEnv {
   ANTHROPIC_API_KEY?: string;
   GEMINI_API_KEY?: string;
   OPENROUTER_API_KEY?: string;
+  GROQ_API_KEY?: string;
 }
 
 /**
@@ -134,6 +136,7 @@ export function loadUltraBrainEnv(): UltraBrainEnv {
     if (parsed.ANTHROPIC_API_KEY) result.ANTHROPIC_API_KEY = parsed.ANTHROPIC_API_KEY;
     if (parsed.GEMINI_API_KEY) result.GEMINI_API_KEY = parsed.GEMINI_API_KEY;
     if (parsed.OPENROUTER_API_KEY) result.OPENROUTER_API_KEY = parsed.OPENROUTER_API_KEY;
+    if (parsed.GROQ_API_KEY) result.GROQ_API_KEY = parsed.GROQ_API_KEY;
 
     return result;
   } catch (error) {
@@ -182,6 +185,13 @@ export function saveUltraBrainEnv(env: UltraBrainEnv): void {
         delete updated.OPENROUTER_API_KEY;
       }
     }
+    if (env.GROQ_API_KEY !== undefined) {
+      if (env.GROQ_API_KEY) {
+        updated.GROQ_API_KEY = env.GROQ_API_KEY;
+      } else {
+        delete updated.GROQ_API_KEY;
+      }
+    }
 
     writeFileSync(ENV_FILE_PATH, serializeEnvFile(updated), 'utf-8');
   } catch (error) {
@@ -223,12 +233,15 @@ export function buildIsolatedEnv(includeCredentials: boolean = true): Record<str
     if (credentials.ANTHROPIC_API_KEY) {
       isolatedEnv.ANTHROPIC_API_KEY = credentials.ANTHROPIC_API_KEY;
     }
-    // Note: GEMINI_API_KEY and OPENROUTER_API_KEY are handled by their respective agents
+    // Note: GEMINI_API_KEY, OPENROUTER_API_KEY, GROQ_API_KEY are handled by their respective agents
     if (credentials.GEMINI_API_KEY) {
       isolatedEnv.GEMINI_API_KEY = credentials.GEMINI_API_KEY;
     }
     if (credentials.OPENROUTER_API_KEY) {
       isolatedEnv.OPENROUTER_API_KEY = credentials.OPENROUTER_API_KEY;
+    }
+    if (credentials.GROQ_API_KEY) {
+      isolatedEnv.GROQ_API_KEY = credentials.GROQ_API_KEY;
     }
   }
 

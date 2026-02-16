@@ -11,7 +11,7 @@
 </h1>
 
 <p align="center">
-  <strong>Persistent semantic memory for Claude Code & Claude Desktop. Native. Fast. Zero Python.</strong>
+  <strong>Persistent semantic memory for Claude Code. Native. Fast. Zero Python. Free.</strong>
 </p>
 
 <p align="center">
@@ -20,6 +20,7 @@
   <a href="package.json"><img src="https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg" alt="Node"></a>
   <a href="package.json"><img src="https://img.shields.io/badge/python-not%20required-success.svg" alt="No Python"></a>
   <a href="package.json"><img src="https://img.shields.io/badge/search-%3C2ms-blueviolet.svg" alt="Search Speed"></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/AI%20processing-free-00C853.svg" alt="Free AI Processing"></a>
 </p>
 
 <p align="center">
@@ -31,7 +32,7 @@
 <br>
 
 <p align="center">
-  UltraBrain gives Claude a persistent memory — across sessions, across days, across weeks. It automatically captures what you work on, compresses it into semantic observations using the Claude Agent SDK, and injects the right context when you need it. Claude remembers your architecture decisions, bug fixes, project history, and brainstorming sessions.
+  UltraBrain gives Claude a persistent memory — across sessions, across days, across weeks. It automatically captures what you work on, compresses it into semantic observations, and injects the right context when you need it. Claude remembers your architecture decisions, bug fixes, project history, and brainstorming sessions.
 </p>
 
 <p align="center">
@@ -56,7 +57,7 @@ Claude is powerful — but it forgets everything when a session ends. Every new 
 
 **UltraBrain fixes that.** It runs silently in the background, building a semantic knowledge base of everything you work on. When a new session starts, the right context is already there.
 
-And with the **Claude Desktop Integration**, you can brainstorm and plan in Claude Desktop, save that knowledge to UltraBrain, and have it automatically available in your next Claude Code session. No copy-pasting. No context loss.
+With the **Claude Desktop Integration**, you can brainstorm in Claude Desktop, save that knowledge to UltraBrain, and have it automatically available in your next Claude Code session. No copy-pasting. No context loss.
 
 <br>
 
@@ -69,12 +70,20 @@ And with the **Claude Desktop Integration**, you can brainstorm and plan in Clau
   </thead>
   <tbody>
     <tr>
+      <td><strong>AI Processing</strong></td>
+      <td><strong>Free</strong> — Groq free tier (14,400 req/day), or Claude, Gemini, OpenRouter</td>
+    </tr>
+    <tr>
       <td><strong>Vector Engine</strong></td>
       <td>LanceDB — native Rust, runs in-process, no external dependencies</td>
     </tr>
     <tr>
       <td><strong>Search Latency</strong></td>
       <td><code>&lt;2ms</code> semantic vector search</td>
+    </tr>
+    <tr>
+      <td><strong>Mission Control</strong></td>
+      <td>Web terminal, automation engine, analytics dashboard, session recording, knowledge graph</td>
     </tr>
     <tr>
       <td><strong>Desktop Integration</strong></td>
@@ -90,11 +99,11 @@ And with the **Claude Desktop Integration**, you can brainstorm and plan in Clau
     </tr>
     <tr>
       <td><strong>Ralph Loop</strong></td>
-      <td>Autonomous iteration loops — launches Claude CLI in Terminal.app for hands-free task execution</td>
+      <td>Autonomous iteration loops — launches Claude CLI for hands-free task execution</td>
     </tr>
     <tr>
       <td><strong>Auto-Tagging</strong></td>
-      <td>AI-powered labeling: bugs, todos, ideas, learnings, features, security, and more — auto-detected from content</td>
+      <td>AI-powered labeling: bugs, todos, ideas, learnings, features, security, and more</td>
     </tr>
     <tr>
       <td><strong>Python Required</strong></td>
@@ -179,11 +188,6 @@ Restart Claude Desktop. You now have access to these tools:
 | `timeline(anchor)` | Get chronological context around a result |
 | `get_observations(ids)` | Fetch full details for specific memories |
 
-**Example workflow:**
-1. Brainstorm architecture in Claude Desktop
-2. `save_memory(text="We decided to use event sourcing for the audit trail...", project="my-app")`
-3. Open Claude Code in `my-app` — the decision is already in context
-
 #### 2. Local Session Import (Historical Sessions)
 
 UltraBrain can import your entire Claude Desktop **Local Agent Mode** conversation history — all sessions, all user prompts — directly into the memory database.
@@ -195,8 +199,6 @@ curl http://localhost:37777/api/claude-desktop/import/check
 # Import all sessions (idempotent — safe to re-run)
 curl -X POST http://localhost:37777/api/claude-desktop/import
 ```
-
-Imported sessions appear in the viewer under the **Claude Desktop** tab with full metadata: project names, timestamps, models, and extracted user prompts.
 
 <br>
 
@@ -214,7 +216,7 @@ SessionStart → UserPromptSubmit → PostToolUse → Stop (Summary) → Session
 
 **Every session:**
 1. **Captures** tool usage, file changes, and Claude's reasoning
-2. **Compresses** raw data into semantic observations (via Claude Agent SDK)
+2. **Compresses** raw data into semantic observations (via AI provider)
 3. **Embeds** observations into LanceDB for vector similarity search
 4. **Injects** relevant context from past sessions into new ones
 
@@ -238,17 +240,20 @@ Claude sees a concise summary of your project history at the start of every sess
 │                  (Express on :37777)                      │
 │                                                          │
 │  ┌─────────┐  ┌──────────────┐  ┌────────────────────┐  │
-│  │ SQLite  │  │   LanceDB    │  │  Claude Agent SDK   │  │
-│  │  (FTS5) │  │  (Vectors)   │  │  (Compression)      │  │
-│  └─────────┘  └──────────────┘  └────────────────────┘  │
+│  │ SQLite  │  │   LanceDB    │  │   AI Providers      │  │
+│  │  (FTS5) │  │  (Vectors)   │  │  Groq · Claude      │  │
+│  └─────────┘  └──────────────┘  │  Gemini · OpenRouter │  │
+│                                  └────────────────────┘  │
 │                                                          │
 │  ┌──────────────────────────────────────────────────┐    │
-│  │       Web Dashboard (React)                       │    │
-│  │       http://localhost:37777                       │    │
+│  │  Mission Control (React Dashboard)               │    │
+│  │  http://localhost:37777                           │    │
 │  │                                                    │    │
-│  │  Project Management · CLAUDE.md Manager            │    │
-│  │  Kanban Board · Ralph Loop · Agent Teams           │    │
-│  │  Memory Feed · Claude Desktop Import               │    │
+│  │  Terminal · Automation · Analytics                 │    │
+│  │  Session Recording · Knowledge Graph              │    │
+│  │  Project Management · CLAUDE.md Manager           │    │
+│  │  Kanban Board · Ralph Loop · Agent Teams          │    │
+│  │  Memory Feed · Claude Desktop Import              │    │
 │  └──────────────────────────────────────────────────┘    │
 │                                                          │
 │  ┌──────────────────────────────────────────────────┐    │
@@ -259,11 +264,6 @@ Claude sees a concise summary of your project history at the start of every sess
 │  ┌──────────────────────────────────────────────────┐    │
 │  │       MCP Server (stdio JSON-RPC)                 │    │
 │  │       Claude Desktop Bridge                       │    │
-│  └──────────────────────────────────────────────────┘    │
-│                                                          │
-│  ┌──────────────────────────────────────────────────┐    │
-│  │   Claude Desktop Local Session Importer           │    │
-│  │   ~/Library/.../local-agent-mode-sessions → DB    │    │
 │  └──────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────┘
         │                    │
@@ -280,13 +280,49 @@ Claude sees a concise summary of your project history at the start of every sess
 
 ## Key Features
 
+### Multi-Provider AI Processing
+
+Choose from **4 AI providers** for observation processing — switch any time via the web UI:
+
+| Provider | Cost | Model | Notes |
+|----------|------|-------|-------|
+| **Groq** (default) | **Free** | GPT-OSS 120B | 14,400 req/day free tier. UltraBrain uses ~186/day (1.3%) |
+| **OpenRouter** | Free/Paid | 100+ models | DeepSeek R1, MiniMax, and more |
+| **Gemini** | Free/Paid | Flash Lite, Flash | Google AI Studio free tier |
+| **Claude** | Subscription/API | Haiku, Sonnet, Opus | Uses your Claude Code CLI subscription |
+
+Default: **Groq** — completely free, no credit card required. Get an API key at [console.groq.com](https://console.groq.com/keys).
+
 ### Persistent Memory
 Context survives across sessions, days, and weeks. Claude knows what you built yesterday.
 
-### Project Management Dashboard
-A full-featured PM suite built into the web viewer at `http://localhost:37777`:
+### Mission Control
 
-- **Overview** — High-level stats across all projects with project filtering (Claude Code projects only)
+The web dashboard at `http://localhost:37777` is a full-featured development command center:
+
+#### Web Terminal
+Built-in terminal emulator — run commands directly from the dashboard. Split panes, multiple tabs, and xterm.js integration. No need to switch windows.
+
+#### Automation Engine
+Cron-based job scheduler for recurring tasks. Create automation jobs with custom schedules, manage run history, and trigger jobs manually. Built-in cron expression editor with human-readable previews.
+
+#### Analytics Dashboard
+Visualize your development patterns:
+- **Tool Usage Chart** — which tools you use most and how they trend over time
+- **Activity Heatmap** — when you code, hour by hour, day by day
+- **Error Patterns** — recurring errors and their frequency
+- **Session Metrics** — duration, token usage, and observation counts
+
+#### Session Recording & Replay
+Record and replay terminal sessions. Review past work sessions with full playback controls.
+
+#### Knowledge Graph
+Interactive visualization of relationships between observations, projects, and concepts. See how your knowledge connects across projects.
+
+### Project Management Dashboard
+A full-featured PM suite built into the web viewer:
+
+- **Overview** — High-level stats across all projects with project filtering
 - **Current State** — Live project dashboard with recent activity and status
 - **Bugs & Fixes** — Track all discovered bugs with tag-based filtering and search
 - **Todos** — Task tracking with Kanban integration
@@ -296,7 +332,7 @@ A full-featured PM suite built into the web viewer at `http://localhost:37777`:
 - **Kanban Board** — Drag-and-drop task management (Todo, In Progress, Done) with one-click backfill from observations
 
 ### CLAUDE.md Manager
-Browse and edit all 7 tiers of the CLAUDE.md hierarchy per project — from managed policies to subdirectory rules. The editor shows file metadata (tokens, load frequency), line numbers, and tracks unsaved changes. Supports the full Claude Code context system:
+Browse and edit all 7 tiers of the CLAUDE.md hierarchy per project — from managed policies to subdirectory rules. The editor shows file metadata (tokens, load frequency), line numbers, and tracks unsaved changes.
 
 | Level | File | Scope |
 |-------|------|-------|
@@ -312,13 +348,13 @@ Browse and edit all 7 tiers of the CLAUDE.md hierarchy per project — from mana
 Launch autonomous Claude sessions directly from the web UI. Configure a task description, set iteration limits and success criteria, then click Start — UltraBrain opens Terminal.app with `claude --dangerously-skip-permissions` pointed at your project directory. Ideal for repetitive tasks, multi-step refactors, and overnight batch work.
 
 ### Auto-Tagging & Smart Task Creation
-The **AutoLabeler** automatically classifies every observation with semantic tags based on content analysis. 13 built-in system tags: `bug`, `todo`, `idea`, `learning`, `decision`, `feature`, `fix`, `refactor`, `performance`, `security`, `devops`, `docs`, `planned-feature`. The **KanbanPopulator** intelligently converts tagged observations into Kanban tasks — only genuinely actionable items (discovered bugs, explicit TODOs) become tasks, while past-tense observations (completed fixes, already-built features) are correctly skipped.
+The **AutoLabeler** automatically classifies every observation with semantic tags based on content analysis. 13 built-in system tags: `bug`, `todo`, `idea`, `learning`, `decision`, `feature`, `fix`, `refactor`, `performance`, `security`, `devops`, `docs`, `planned-feature`. The **KanbanPopulator** intelligently converts tagged observations into Kanban tasks — only genuinely actionable items become tasks, while completed work is correctly skipped.
 
 ### Agent Teams Dashboard
 Monitor and manage multi-agent team sessions. View active teams, their tasks, and coordination status across your projects.
 
 ### Claude Desktop Integration
-Two-way integration: **MCP Bridge** for real-time knowledge sharing between Claude Desktop and Claude Code, plus **Local Session Import** to bring your entire Claude Desktop conversation history into UltraBrain. All sessions, conversation prompts, and metadata are preserved. The Claude Desktop viewer shows sessions organized by project with prompt counts, expandable conversation details, and one-click re-import.
+Two-way integration: **MCP Bridge** for real-time knowledge sharing between Claude Desktop and Claude Code, plus **Local Session Import** to bring your entire Claude Desktop conversation history into UltraBrain.
 
 ### Semantic Vector Search
 LanceDB + all-MiniLM-L6-v2 embeddings find the most relevant memories, not just keyword matches. Search in <2ms.
@@ -349,28 +385,6 @@ Auto-installs dependencies, auto-creates database, auto-starts worker. Settings 
 
 <br>
 
-## Web Dashboard
-
-The UltraBrain web dashboard at `http://localhost:37777` provides a comprehensive interface for managing your AI development workflow:
-
-| Section | Description |
-|---------|-------------|
-| **Projects** | Browse all tracked projects with observation counts and activity timelines |
-| **Project Management** | Full PM suite: Overview, Current State, Bugs, Todos, Ideas, Learnings, Tags, Kanban |
-| **CLAUDE.md** | Visual editor for all CLAUDE.md files across the 7-tier hierarchy |
-| **Claude Desktop** | Browse imported sessions organized by project, view conversation prompts, and re-import with one click |
-| **Ralph Loop** | Configure and launch autonomous Claude iteration loops |
-| **Agent Teams** | Monitor multi-agent team sessions and coordination |
-| **Feed** | Real-time stream of observations, summaries, and prompts with project filtering |
-
-The dashboard uses a dark theme with monospace typography, inline styles (no CSS modules), and real-time SSE updates.
-
-<br>
-
----
-
-<br>
-
 ## Performance
 
 Benchmarked on MacBook Pro M3, 1,200 observations in database:
@@ -383,6 +397,7 @@ Benchmarked on MacBook Pro M3, 1,200 observations in database:
 | Token savings | **79.7%** vs raw context |
 | Database size | **~2MB** per 1,000 observations |
 | Memory footprint | **~45MB** worker process |
+| AI processing cost | **$0** (Groq free tier) |
 
 <br>
 
@@ -406,13 +421,15 @@ That's it. No Python. No pip. No external processes.
 
 ## Configuration
 
-Settings are managed in `~/.ultrabrain/settings.json` (auto-created on first run):
+Settings are managed in `~/.ultrabrain/settings.json` (auto-created on first run) or via the web UI at `http://localhost:37777`:
 
 | Setting | Default | Description |
 |---|---|---|
+| `ULTRABRAIN_PROVIDER` | `groq` | AI provider (`groq` / `claude` / `gemini` / `openrouter`) |
+| `ULTRABRAIN_GROQ_API_KEY` | | Groq API key (free at console.groq.com) |
+| `ULTRABRAIN_GROQ_MODEL` | `openai/gpt-oss-120b` | Groq model |
 | `ULTRABRAIN_WORKER_PORT` | `37777` | Worker API port |
-| `ULTRABRAIN_PROVIDER` | `claude` | AI provider (claude/gemini/openrouter) |
-| `ULTRABRAIN_CONTEXT_OBSERVATIONS` | `20` | Observations per context injection |
+| `ULTRABRAIN_CONTEXT_OBSERVATIONS` | `50` | Observations per context injection |
 | `ULTRABRAIN_LOG_LEVEL` | `INFO` | Log verbosity |
 | `ULTRABRAIN_DATA_DIR` | `~/.ultrabrain` | Data directory |
 
@@ -472,8 +489,6 @@ Copyright (C) 2026 [EconLab AI](https://www.econlab-ai.com). All rights reserved
 - Use, modify, and distribute freely
 - Network server deployments must share source code
 - Derivative works must use AGPL-3.0
-
-The AGPL-3.0 license ensures UltraBrain remains open source while protecting against closed-source commercial exploitation. If you run a modified version of UltraBrain as a network service, you must make your source code available to users. This keeps the ecosystem fair and open for everyone.
 
 See [LICENSE](LICENSE) for full details.
 

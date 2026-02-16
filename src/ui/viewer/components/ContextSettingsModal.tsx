@@ -423,23 +423,53 @@ export function ContextSettingsModal({
                   <option value="claude">Claude (uses your Claude account)</option>
                   <option value="gemini">Gemini (uses API key)</option>
                   <option value="openrouter">OpenRouter (multi-model)</option>
+                  <option value="groq">Groq (free tier, GPT-OSS 120B)</option>
                 </select>
               </FormField>
 
               {formState.ULTRABRAIN_PROVIDER === 'claude' && (
-                <FormField
-                  label="Claude Model"
-                  tooltip="Claude model used for generating observations"
-                >
-                  <select
-                    value={formState.ULTRABRAIN_MODEL || 'haiku'}
-                    onChange={(e) => updateSetting('ULTRABRAIN_MODEL', e.target.value)}
+                <>
+                  <FormField
+                    label="Authentication"
+                    tooltip="'Subscription' uses your Claude Code CLI billing. 'API Key' uses a separate Anthropic API key."
                   >
-                    <option value="haiku">haiku (fastest)</option>
-                    <option value="sonnet">sonnet (balanced)</option>
-                    <option value="opus">opus (highest quality)</option>
-                  </select>
-                </FormField>
+                    <select
+                      value={formState.ULTRABRAIN_CLAUDE_AUTH_METHOD || 'cli'}
+                      onChange={(e) => updateSetting('ULTRABRAIN_CLAUDE_AUTH_METHOD', e.target.value)}
+                    >
+                      <option value="cli">Claude Subscription (via CLI)</option>
+                      <option value="api">Anthropic API Key</option>
+                    </select>
+                  </FormField>
+
+                  {formState.ULTRABRAIN_CLAUDE_AUTH_METHOD === 'api' && (
+                    <FormField
+                      label="Anthropic API Key"
+                      tooltip="Your Anthropic API key from console.anthropic.com"
+                    >
+                      <input
+                        type="password"
+                        value={formState.ULTRABRAIN_ANTHROPIC_API_KEY || ''}
+                        onChange={(e) => updateSetting('ULTRABRAIN_ANTHROPIC_API_KEY', e.target.value)}
+                        placeholder="sk-ant-..."
+                      />
+                    </FormField>
+                  )}
+
+                  <FormField
+                    label="Claude Model"
+                    tooltip="Claude model used for generating observations"
+                  >
+                    <select
+                      value={formState.ULTRABRAIN_MODEL || 'haiku'}
+                      onChange={(e) => updateSetting('ULTRABRAIN_MODEL', e.target.value)}
+                    >
+                      <option value="haiku">haiku (fastest)</option>
+                      <option value="sonnet">sonnet (balanced)</option>
+                      <option value="opus">opus (highest quality)</option>
+                    </select>
+                  </FormField>
+                </>
               )}
 
               {formState.ULTRABRAIN_PROVIDER === 'gemini' && (
@@ -480,6 +510,33 @@ export function ContextSettingsModal({
                 </>
               )}
 
+              {formState.ULTRABRAIN_PROVIDER === 'groq' && (
+                <>
+                  <FormField
+                    label="Groq API Key"
+                    tooltip="Your Groq API key from console.groq.com (or set GROQ_API_KEY env var)"
+                  >
+                    <input
+                      type="password"
+                      value={formState.ULTRABRAIN_GROQ_API_KEY || ''}
+                      onChange={(e) => updateSetting('ULTRABRAIN_GROQ_API_KEY', e.target.value)}
+                      placeholder="Enter Groq API key..."
+                    />
+                  </FormField>
+                  <FormField
+                    label="Groq Model"
+                    tooltip="Model identifier from Groq (e.g., openai/gpt-oss-120b)"
+                  >
+                    <input
+                      type="text"
+                      value={formState.ULTRABRAIN_GROQ_MODEL || 'openai/gpt-oss-120b'}
+                      onChange={(e) => updateSetting('ULTRABRAIN_GROQ_MODEL', e.target.value)}
+                      placeholder="openai/gpt-oss-120b"
+                    />
+                  </FormField>
+                </>
+              )}
+
               {formState.ULTRABRAIN_PROVIDER === 'openrouter' && (
                 <>
                   <FormField
@@ -499,9 +556,9 @@ export function ContextSettingsModal({
                   >
                     <input
                       type="text"
-                      value={formState.ULTRABRAIN_OPENROUTER_MODEL || 'xiaomi/mimo-v2-flash:free'}
+                      value={formState.ULTRABRAIN_OPENROUTER_MODEL || 'deepseek/deepseek-r1-0528:free'}
                       onChange={(e) => updateSetting('ULTRABRAIN_OPENROUTER_MODEL', e.target.value)}
-                      placeholder="e.g., xiaomi/mimo-v2-flash:free"
+                      placeholder="e.g., deepseek/deepseek-r1-0528:free"
                     />
                   </FormField>
                   <FormField

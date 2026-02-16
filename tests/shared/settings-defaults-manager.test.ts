@@ -309,7 +309,7 @@ describe('SettingsDefaultsManager', () => {
 
   describe('get', () => {
     it('should return default value for key', () => {
-      expect(SettingsDefaultsManager.get('ULTRABRAIN_MODEL')).toBe('claude-sonnet-4-5');
+      expect(SettingsDefaultsManager.get('ULTRABRAIN_MODEL')).toBe('claude-haiku-4-5');
       expect(SettingsDefaultsManager.get('ULTRABRAIN_WORKER_PORT')).toBe('37777');
     });
   });

@@ -68,6 +68,18 @@ async function buildViewer() {
       );
     }
 
+    // Copy PWA files (manifest + service worker)
+    const manifestSrc = path.join(srcUiDir, 'manifest.json');
+    if (fs.existsSync(manifestSrc)) {
+      fs.copyFileSync(manifestSrc, path.join(outputUiDir, 'manifest.json'));
+      console.log('  - plugin/ui/manifest.json (PWA manifest)');
+    }
+    const swSrc = path.join(srcUiDir, 'sw.js');
+    if (fs.existsSync(swSrc)) {
+      fs.copyFileSync(swSrc, path.join(outputUiDir, 'sw.js'));
+      console.log('  - plugin/ui/sw.js (service worker)');
+    }
+
     // Copy image assets (logos, etc.)
     const imgAssetsDir = path.join(rootDir, 'src/ui/assets');
     const outputAssetsDir = path.join(rootDir, 'plugin/ui/assets');

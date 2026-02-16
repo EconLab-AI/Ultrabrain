@@ -1,0 +1,17 @@
+{
+  "name": "UltraBrain",
+  "short_name": "UltraBrain",
+  "description": "Persistent semantic memory for Claude Code & Claude Desktop",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/assets/econlab_logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -19,8 +19,9 @@ export interface SettingsDefaults {
   ULTRABRAIN_WORKER_HOST: string;
   ULTRABRAIN_SKIP_TOOLS: string;
   // AI Provider Configuration
-  ULTRABRAIN_PROVIDER: string;  // 'claude' | 'gemini' | 'openrouter'
+  ULTRABRAIN_PROVIDER: string;  // 'claude' | 'gemini' | 'openrouter' | 'groq'
   ULTRABRAIN_CLAUDE_AUTH_METHOD: string;  // 'cli' | 'api' - how Claude provider authenticates
+  ULTRABRAIN_ANTHROPIC_API_KEY: string;  // Anthropic API key (required when auth_method is 'api')
   ULTRABRAIN_GEMINI_API_KEY: string;
   ULTRABRAIN_GEMINI_MODEL: string;  // 'gemini-2.5-flash-lite' | 'gemini-2.5-flash' | 'gemini-3-flash-preview'
   ULTRABRAIN_GEMINI_RATE_LIMITING_ENABLED: string;  // 'true' | 'false' - enable rate limiting for free tier
@@ -30,6 +31,8 @@ export interface SettingsDefaults {
   ULTRABRAIN_OPENROUTER_APP_NAME: string;
   ULTRABRAIN_OPENROUTER_MAX_CONTEXT_MESSAGES: string;
   ULTRABRAIN_OPENROUTER_MAX_TOKENS: string;
+  ULTRABRAIN_GROQ_API_KEY: string;
+  ULTRABRAIN_GROQ_MODEL: string;
   // System Configuration
   ULTRABRAIN_DATA_DIR: string;
   ULTRABRAIN_LOG_LEVEL: string;
@@ -62,23 +65,26 @@ export class SettingsDefaultsManager {
    * Default values for all settings
    */
   private static readonly DEFAULTS: SettingsDefaults = {
-    ULTRABRAIN_MODEL: 'claude-sonnet-4-5',
+    ULTRABRAIN_MODEL: 'claude-haiku-4-5',
     ULTRABRAIN_CONTEXT_OBSERVATIONS: '50',
     ULTRABRAIN_WORKER_PORT: '37777',
     ULTRABRAIN_WORKER_HOST: '127.0.0.1',
     ULTRABRAIN_SKIP_TOOLS: 'ListMcpResourcesTool,SlashCommand,Skill,TodoWrite,AskUserQuestion',
     // AI Provider Configuration
-    ULTRABRAIN_PROVIDER: 'claude',  // Default to Claude
+    ULTRABRAIN_PROVIDER: 'groq',  // Default to Groq (free tier, 14,400 req/day)
     ULTRABRAIN_CLAUDE_AUTH_METHOD: 'cli',  // Default to CLI subscription billing (not API key)
+    ULTRABRAIN_ANTHROPIC_API_KEY: '',  // Empty by default, required when auth_method is 'api'
     ULTRABRAIN_GEMINI_API_KEY: '',  // Empty by default, can be set via UI or env
     ULTRABRAIN_GEMINI_MODEL: 'gemini-2.5-flash-lite',  // Default Gemini model (highest free tier RPM)
     ULTRABRAIN_GEMINI_RATE_LIMITING_ENABLED: 'true',  // Rate limiting ON by default for free tier users
     ULTRABRAIN_OPENROUTER_API_KEY: '',  // Empty by default, can be set via UI or env
-    ULTRABRAIN_OPENROUTER_MODEL: 'xiaomi/mimo-v2-flash:free',  // Default OpenRouter model (free tier)
+    ULTRABRAIN_OPENROUTER_MODEL: 'deepseek/deepseek-r1-0528:free',  // Default OpenRouter model (DeepSeek R1 free, 164K context)
     ULTRABRAIN_OPENROUTER_SITE_URL: '',  // Optional: for OpenRouter analytics
     ULTRABRAIN_OPENROUTER_APP_NAME: 'ultrabrain',  // App name for OpenRouter analytics
     ULTRABRAIN_OPENROUTER_MAX_CONTEXT_MESSAGES: '20',  // Max messages in context window
     ULTRABRAIN_OPENROUTER_MAX_TOKENS: '100000',  // Max estimated tokens (~100k safety limit)
+    ULTRABRAIN_GROQ_API_KEY: '',  // Empty by default, can be set via UI or env
+    ULTRABRAIN_GROQ_MODEL: 'openai/gpt-oss-120b',  // Default Groq model (GPT-OSS 120B, free tier)
     // System Configuration
     ULTRABRAIN_DATA_DIR: join(homedir(), '.ultrabrain'),
     ULTRABRAIN_LOG_LEVEL: 'INFO',

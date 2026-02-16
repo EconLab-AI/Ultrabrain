@@ -61,7 +61,9 @@ export interface Settings {
   ULTRABRAIN_WORKER_HOST: string;
 
   // AI Provider Configuration
-  ULTRABRAIN_PROVIDER?: string;  // 'claude' | 'gemini' | 'openrouter'
+  ULTRABRAIN_PROVIDER?: string;  // 'claude' | 'gemini' | 'openrouter' | 'groq'
+  ULTRABRAIN_CLAUDE_AUTH_METHOD?: string;  // 'cli' | 'api'
+  ULTRABRAIN_ANTHROPIC_API_KEY?: string;
   ULTRABRAIN_GEMINI_API_KEY?: string;
   ULTRABRAIN_GEMINI_MODEL?: string;  // 'gemini-2.5-flash-lite' | 'gemini-2.5-flash' | 'gemini-3-flash-preview'
   ULTRABRAIN_GEMINI_RATE_LIMITING_ENABLED?: string;  // 'true' | 'false'
@@ -69,6 +71,8 @@ export interface Settings {
   ULTRABRAIN_OPENROUTER_MODEL?: string;
   ULTRABRAIN_OPENROUTER_SITE_URL?: string;
   ULTRABRAIN_OPENROUTER_APP_NAME?: string;
+  ULTRABRAIN_GROQ_API_KEY?: string;
+  ULTRABRAIN_GROQ_MODEL?: string;
 
   // Token Economics Display
   ULTRABRAIN_CONTEXT_SHOW_READ_TOKENS?: string;
