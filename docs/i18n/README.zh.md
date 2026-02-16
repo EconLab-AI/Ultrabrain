@@ -50,7 +50,7 @@
 
 <p align="center">
   <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-AGPL%203.0-blue.svg" alt="License">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
   </a>
   <a href="package.json">
     <img src="https://img.shields.io/badge/version-6.5.0-green.svg" alt="Version">
@@ -275,17 +275,16 @@ npm run bug-report
 
 ## 许可证
 
-本项目采用 **GNU Affero General Public License v3.0** (AGPL-3.0) 许可。
+本项目采用 **MIT License** (MIT) 许可。
 
-Copyright (C) 2025 Giuliano Falco (@giulianofalco)。保留所有权利。
+Copyright (c) 2026 Giuliano Falco (@giulianofalco)。保留所有权利。
 
 详见 [LICENSE](LICENSE) 文件了解完整详情。
 
 **这意味着什么:**
 
 - 您可以自由使用、修改和分发本软件
-- 如果您修改并部署到网络服务器上,必须公开您的源代码
-- 衍生作品也必须采用 AGPL-3.0 许可
+- 衍生作品也必须采用 MIT 许可
 - 本软件不提供任何保证
 
 **关于 Ragtime 的说明**: `ragtime/` 目录单独采用 **PolyForm Noncommercial License 1.0.0** 许可。详见 [ragtime/LICENSE](ragtime/LICENSE)。

@@ -49,7 +49,7 @@
 
 <p align="center">
   <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-AGPL%203.0-blue.svg" alt="License">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
   </a>
   <a href="package.json">
     <img src="https://img.shields.io/badge/version-6.5.0-green.svg" alt="Version">
@@ -278,7 +278,7 @@ npm run bug-report
 
 ## الترخيص (License)
 
-هذا المشروع مرخص بموجب **ترخيص GNU Affero العام الإصدار 3.0** (AGPL-3.0).
+هذا المشروع مرخص بموجب **MIT License** (MIT).
 
 حقوق النشر (C) 2025 Giuliano Falco (@giulianofalco). جميع الحقوق محفوظة.
 
@@ -288,7 +288,7 @@ npm run bug-report
 
 - يمكنك استخدام وتعديل وتوزيع هذا البرنامج بحرية
 - إذا قمت بتعديل ونشر على خادم شبكة، يجب أن تتيح كود المصدر الخاص بك
-- الأعمال المشتقة يجب أن تكون مرخصة أيضًا تحت AGPL-3.0
+- الأعمال المشتقة يجب أن تكون مرخصة أيضًا تحت MIT
 - لا يوجد ضمان لهذا البرنامج
 
 **ملاحظة حول Ragtime**: دليل `ragtime/` مرخص بشكل منفصل تحت **ترخيص PolyForm Noncommercial 1.0.0**. انظر [ragtime/LICENSE](ragtime/LICENSE) للتفاصيل.

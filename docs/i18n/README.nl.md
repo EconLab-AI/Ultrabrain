@@ -49,7 +49,7 @@
 
 <p align="center">
   <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-AGPL%203.0-blue.svg" alt="License">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
   </a>
   <a href="package.json">
     <img src="https://img.shields.io/badge/version-6.5.0-green.svg" alt="Version">
@@ -274,9 +274,9 @@ Zie [Ontwikkelingsgids](https://docs.ultrabrain.ai/development) voor bijdragewor
 
 ## Licentie
 
-Dit project is gelicentieerd onder de **GNU Affero General Public License v3.0** (AGPL-3.0).
+Dit project is gelicentieerd onder de **MIT License** (MIT).
 
-Copyright (C) 2025 Giuliano Falco (@giulianofalco). Alle rechten voorbehouden.
+Copyright (c) 2026 Giuliano Falco (@giulianofalco). Alle rechten voorbehouden.
 
 Zie het [LICENSE](LICENSE) bestand voor volledige details.
 
@@ -284,7 +284,7 @@ Zie het [LICENSE](LICENSE) bestand voor volledige details.
 
 - Je kunt deze software vrijelijk gebruiken, aanpassen en distribueren
 - Als je aanpast en implementeert op een netwerkserver, moet je je broncode beschikbaar maken
-- Afgeleide werken moeten ook gelicentieerd zijn onder AGPL-3.0
+- Afgeleide werken moeten ook gelicentieerd zijn onder MIT
 - Er is GEEN GARANTIE voor deze software
 
 **Opmerking over Ragtime**: De `ragtime/` directory is afzonderlijk gelicentieerd onder de **PolyForm Noncommercial License 1.0.0**. Zie [ragtime/LICENSE](ragtime/LICENSE) voor details.

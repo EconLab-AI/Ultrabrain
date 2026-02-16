@@ -50,7 +50,7 @@
 
 <p align="center">
   <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-AGPL%203.0-blue.svg" alt="License">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
   </a>
   <a href="package.json">
     <img src="https://img.shields.io/badge/version-6.5.0-green.svg" alt="Version">
@@ -275,17 +275,16 @@ A hozzájárulási munkafolyamatért lásd a [Fejlesztési útmutatót](https://
 
 ## Licenc
 
-Ez a projekt a **GNU Affero General Public License v3.0** (AGPL-3.0) alatt licencelt.
+Ez a projekt a **MIT License** (MIT) alatt licencelt.
 
-Copyright (C) 2025 Giuliano Falco (@giulianofalco). Minden jog fenntartva.
+Copyright (c) 2026 Giuliano Falco (@giulianofalco). Minden jog fenntartva.
 
 A teljes részletekért lásd a [LICENSE](LICENSE) fájlt.
 
 **Mit jelent ez:**
 
 - Szabadon használhatja, módosíthatja és terjesztheti ezt a szoftvert
-- Ha módosítja és hálózati szerveren telepíti, elérhetővé kell tennie a forráskódot
-- A származékos munkáknak szintén AGPL-3.0 alatt kell licencelve lenniük
+- A származékos munkáknak szintén MIT alatt kell licencelve lenniük
 - Ehhez a szoftverhez NINCS GARANCIA
 
 **Megjegyzés a Ragtime-ról**: A `ragtime/` könyvtár külön licencelt a **PolyForm Noncommercial License 1.0.0** alatt. Részletekért lásd a [ragtime/LICENSE](ragtime/LICENSE) fájlt.

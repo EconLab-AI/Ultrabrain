@@ -50,7 +50,7 @@
 
 <p align="center">
   <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-AGPL%203.0-blue.svg" alt="License">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
   </a>
   <a href="package.json">
     <img src="https://img.shields.io/badge/version-6.5.0-green.svg" alt="Version">
@@ -275,9 +275,9 @@ Lihat [Panduan Pengembangan](https://docs.ultrabrain.ai/development) untuk alur 
 
 ## Lisensi
 
-Proyek ini dilisensikan di bawah **GNU Affero General Public License v3.0** (AGPL-3.0).
+Proyek ini dilisensikan di bawah **MIT License** (MIT).
 
-Copyright (C) 2025 Giuliano Falco (@giulianofalco). All rights reserved.
+Copyright (c) 2026 Giuliano Falco (@giulianofalco). All rights reserved.
 
 Lihat file [LICENSE](LICENSE) untuk detail lengkap.
 
@@ -285,7 +285,7 @@ Lihat file [LICENSE](LICENSE) untuk detail lengkap.
 
 - Anda dapat menggunakan, memodifikasi, dan mendistribusikan perangkat lunak ini dengan bebas
 - Jika Anda memodifikasi dan men-deploy di server jaringan, Anda harus membuat kode sumber Anda tersedia
-- Karya turunan juga harus dilisensikan di bawah AGPL-3.0
+- Karya turunan juga harus dilisensikan di bawah MIT
 - TIDAK ADA JAMINAN untuk perangkat lunak ini
 
 **Catatan tentang Ragtime**: Direktori `ragtime/` dilisensikan secara terpisah di bawah **PolyForm Noncommercial License 1.0.0**. Lihat [ragtime/LICENSE](ragtime/LICENSE) untuk detail.

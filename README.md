@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL%203.0-blue.svg" alt="License"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
   <a href="package.json"><img src="https://img.shields.io/badge/version-1.0.0-7C3AED.svg" alt="Version"></a>
   <a href="package.json"><img src="https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg" alt="Node"></a>
   <a href="package.json"><img src="https://img.shields.io/badge/python-not%20required-success.svg" alt="No Python"></a>
@@ -26,7 +26,9 @@
 <p align="center">
   <a href="https://www.econlab-ai.com">Website</a> &middot;
   <a href="https://x.com/EconLab_DE">X / Twitter</a> &middot;
-  <a href="https://github.com/EconLab-AI/Ultrabrain/issues">Issues</a>
+  <a href="https://github.com/EconLab-AI/Ultrabrain/issues">Issues</a> &middot;
+  <a href="CONTRIBUTING.md">Contributing</a> &middot;
+  <a href="https://github.com/EconLab-AI/Ultrabrain/discussions">Discussions</a>
 </p>
 
 <br>
@@ -467,12 +469,14 @@ npm run build-and-sync
 
 ## Contributing
 
-Contributions welcome. Please follow existing code patterns and include tests.
+Contributions welcome! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for the full guide.
 
 1. Fork the repository
 2. Create a feature branch
-3. Make changes with tests
+3. Make changes — `npm run build-and-sync` to test
 4. Submit a Pull Request
+
+Look for [`good-first-issue`](https://github.com/EconLab-AI/Ultrabrain/labels/good-first-issue) labels to get started.
 
 <br>
 
@@ -482,15 +486,11 @@ Contributions welcome. Please follow existing code patterns and include tests.
 
 ## License
 
-**GNU Affero General Public License v3.0** (AGPL-3.0)
+**MIT License**
 
-Copyright (C) 2026 [EconLab AI](https://www.econlab-ai.com). All rights reserved.
+Copyright (c) 2026 [EconLab AI](https://www.econlab-ai.com).
 
-- Use, modify, and distribute freely
-- Network server deployments must share source code
-- Derivative works must use AGPL-3.0
-
-See [LICENSE](LICENSE) for full details.
+Free to use, modify, and distribute. See [LICENSE](LICENSE) for details.
 
 <br>
 

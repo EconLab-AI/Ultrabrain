@@ -50,7 +50,7 @@
 
 <p align="center">
   <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-AGPL%203.0-blue.svg" alt="License">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
   </a>
   <a href="package.json">
     <img src="https://img.shields.io/badge/version-6.5.0-green.svg" alt="Version">
@@ -275,7 +275,7 @@ npm run bug-report
 
 ## Ліцензія
 
-Цей проєкт ліцензовано під **GNU Affero General Public License v3.0** (AGPL-3.0).
+Цей проєкт ліцензовано під **MIT License** (MIT).
 
 Авторське право (C) 2025 Giuliano Falco (@giulianofalco). Всі права захищені.
 
@@ -284,8 +284,7 @@ npm run bug-report
 **Що це означає:**
 
 - Ви можете використовувати, модифікувати та поширювати це програмне забезпечення вільно
-- Якщо ви модифікуєте та розгортаєте на мережевому сервері, ви повинні зробити свій вихідний код доступним
-- Похідні роботи також повинні бути ліцензовані під AGPL-3.0
+- Похідні роботи також повинні бути ліцензовані під MIT
 - Для цього програмного забезпечення НЕМАЄ ГАРАНТІЇ
 
 **Примітка про Ragtime**: Каталог `ragtime/` ліцензовано окремо під **PolyForm Noncommercial License 1.0.0**. Дивіться [ragtime/LICENSE](ragtime/LICENSE) для деталей.

@@ -76,7 +76,7 @@ See [LICENSE](./LICENSE) for full terms.
 
 ### Why a different license?
 
-The main ultrabrain repository is licensed under AGPL 3.0, but ragtime uses the more restrictive PolyForm Noncommercial license to ensure it remains freely available for personal and educational use while preventing commercial exploitation.
+The main ultrabrain repository is licensed under MIT, but ragtime uses the more restrictive PolyForm Noncommercial license to ensure it remains freely available for personal and educational use while preventing commercial exploitation.
 
 ---
 

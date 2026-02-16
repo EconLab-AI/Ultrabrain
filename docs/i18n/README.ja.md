@@ -50,7 +50,7 @@
 
 <p align="center">
   <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-AGPL%203.0-blue.svg" alt="License">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
   </a>
   <a href="package.json">
     <img src="https://img.shields.io/badge/version-6.5.0-green.svg" alt="Version">
@@ -275,17 +275,16 @@ npm run bug-report
 
 ## ライセンス
 
-このプロジェクトは**GNU Affero General Public License v3.0**(AGPL-3.0)の下でライセンスされています。
+このプロジェクトは**MIT License**(MIT)の下でライセンスされています。
 
-Copyright (C) 2025 Giuliano Falco (@giulianofalco). All rights reserved.
+Copyright (c) 2026 Giuliano Falco (@giulianofalco). All rights reserved.
 
 詳細は[LICENSE](LICENSE)ファイルを参照してください。
 
 **これが意味すること:**
 
 - このソフトウェアを自由に使用、変更、配布できます
-- ネットワークサーバーで変更して展開する場合、ソースコードを利用可能にする必要があります
-- 派生作品もAGPL-3.0の下でライセンスする必要があります
+- 派生作品もMITの下でライセンスする必要があります
 - このソフトウェアには保証がありません
 
 **Ragtimeに関する注意**: `ragtime/`ディレクトリは **PolyForm Noncommercial License 1.0.0** の下で個別にライセンスされています。詳細は[ragtime/LICENSE](ragtime/LICENSE)を参照してください。

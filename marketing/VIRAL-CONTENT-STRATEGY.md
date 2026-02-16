@@ -259,7 +259,7 @@ This is the future of AI coding.
 
 **Freitag** (Community CTA)
 ```
-UltraBrain is AGPL-3.0.
+UltraBrain is MIT.
 
 Not "open-source but actually we'll close it later."
 Not "free tier with paywalled features."
@@ -356,7 +356,7 @@ Every session starts fresh.
 - Columnar storage (Apache Arrow)
 - Sub-millisecond queries at our scale
 
-AGPL-3.0, contributions welcome.
+MIT, contributions welcome.
 
 GitHub: [link]
 ```

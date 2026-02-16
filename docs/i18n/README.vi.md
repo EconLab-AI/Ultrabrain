@@ -50,7 +50,7 @@
 
 <p align="center">
   <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-AGPL%203.0-blue.svg" alt="License">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
   </a>
   <a href="package.json">
     <img src="https://img.shields.io/badge/version-6.5.0-green.svg" alt="Version">
@@ -275,17 +275,16 @@ Xem [Hướng Dẫn Phát Triển](https://docs.ultrabrain.ai/development) để
 
 ## Giấy Phép
 
-Dự án này được cấp phép theo **GNU Affero General Public License v3.0** (AGPL-3.0).
+Dự án này được cấp phép theo **MIT License** (MIT).
 
-Copyright (C) 2025 Giuliano Falco (@giulianofalco). Bảo lưu mọi quyền.
+Copyright (c) 2026 Giuliano Falco (@giulianofalco). Bảo lưu mọi quyền.
 
 Xem tệp [LICENSE](LICENSE) để biết chi tiết đầy đủ.
 
 **Điều Này Có Nghĩa Là:**
 
 - Bạn có thể sử dụng, sửa đổi và phân phối phần mềm này tự do
-- Nếu bạn sửa đổi và triển khai trên máy chủ mạng, bạn phải cung cấp mã nguồn của mình
-- Các tác phẩm phái sinh cũng phải được cấp phép theo AGPL-3.0
+- Các tác phẩm phái sinh cũng phải được cấp phép theo MIT
 - KHÔNG CÓ BẢO HÀNH cho phần mềm này
 
 **Lưu Ý Về Ragtime**: Thư mục `ragtime/` được cấp phép riêng theo **PolyForm Noncommercial License 1.0.0**. Xem [ragtime/LICENSE](ragtime/LICENSE) để biết chi tiết.

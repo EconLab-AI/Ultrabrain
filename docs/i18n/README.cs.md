@@ -50,7 +50,7 @@
 
 <p align="center">
   <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-AGPL%203.0-blue.svg" alt="License">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
   </a>
   <a href="package.json">
     <img src="https://img.shields.io/badge/version-6.5.0-green.svg" alt="Version">
@@ -275,9 +275,9 @@ Pracovní postup pro přispívání najdete v [Průvodci vývojem](https://docs.
 
 ## Licence
 
-Tento projekt je licencován pod **GNU Affero General Public License v3.0** (AGPL-3.0).
+Tento projekt je licencován pod **MIT License** (MIT).
 
-Copyright (C) 2025 Giuliano Falco (@giulianofalco). Všechna práva vyhrazena.
+Copyright (c) 2026 Giuliano Falco (@giulianofalco). Všechna práva vyhrazena.
 
 Úplné podrobnosti najdete v souboru [LICENSE](LICENSE).
 
@@ -285,7 +285,7 @@ Copyright (C) 2025 Giuliano Falco (@giulianofalco). Všechna práva vyhrazena.
 
 - Software můžete volně používat, upravovat a distribuovat
 - Pokud jej upravíte a nasadíte na síťovém serveru, musíte zpřístupnit svůj zdrojový kód
-- Odvozená díla musí být také licencována pod AGPL-3.0
+- Odvozená díla musí být také licencována pod MIT
 - Pro tento software neexistuje ŽÁDNÁ ZÁRUKA
 
 **Poznámka k Ragtime**: Adresář `ragtime/` je licencován samostatně pod **PolyForm Noncommercial License 1.0.0**. Podrobnosti najdete v [ragtime/LICENSE](ragtime/LICENSE).

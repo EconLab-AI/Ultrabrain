@@ -375,7 +375,7 @@ This is autonomous AI development.
 
 ### FREITAG - Community CTA
 ```
-UltraBrain is AGPL-3.0.
+UltraBrain is MIT.
 
 Not "open-source but actually we'll close it later."
 Not "free tier with paywalled features."
@@ -555,7 +555,7 @@ Giuliano / EconLab AI
 | Anthropic-Nahe | @alexalbert__, @AnthropicAI | Offizielle Reichweite |
 | Claude Code Power-User | Top r/ClaudeAI Poster | Zielgruppe = ihre Follower |
 | AI Dev Tool Reviewer | AI Tool YouTuber | Review = Social Proof |
-| Open Source Advocates | FOSS-Community Accounts | AGPL-3.0 = Story |
+| Open Source Advocates | FOSS-Community Accounts | MIT = Story |
 | Tech Newsletter | Dev Tool Newsletter-Autoren | Multiplikatoren |
 
 ---

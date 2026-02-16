@@ -114,7 +114,7 @@
         "header": "Legal",
         "items": [
           {
-            "label": "License (AGPL-3.0)",
+            "label": "License (MIT)",
             "href": "https://github.com/EconLab-AI/Ultrabrain/blob/main/LICENSE"
           }
         ]

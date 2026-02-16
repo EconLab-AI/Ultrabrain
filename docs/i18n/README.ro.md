@@ -50,7 +50,7 @@
 
 <p align="center">
   <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-AGPL%203.0-blue.svg" alt="License">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
   </a>
   <a href="package.json">
     <img src="https://img.shields.io/badge/version-6.5.0-green.svg" alt="Version">
@@ -275,9 +275,9 @@ Consultați [Ghidul de Dezvoltare](https://docs.ultrabrain.ai/development) pentr
 
 ## Licență
 
-Acest proiect este licențiat sub **GNU Affero General Public License v3.0** (AGPL-3.0).
+Acest proiect este licențiat sub **MIT License** (MIT).
 
-Copyright (C) 2025 Giuliano Falco (@giulianofalco). Toate drepturile rezervate.
+Copyright (c) 2026 Giuliano Falco (@giulianofalco). Toate drepturile rezervate.
 
 Consultați fișierul [LICENSE](LICENSE) pentru detalii complete.
 
@@ -285,7 +285,7 @@ Consultați fișierul [LICENSE](LICENSE) pentru detalii complete.
 
 - Puteți folosi, modifica și distribui acest software liber
 - Dacă modificați și implementați pe un server de rețea, trebuie să faceți disponibil codul sursă
-- Lucrările derivate trebuie să fie licențiate și ele sub AGPL-3.0
+- Lucrările derivate trebuie să fie licențiate și ele sub MIT
 - NU EXISTĂ NICIO GARANȚIE pentru acest software
 
 **Notă despre Ragtime**: Directorul `ragtime/` este licențiat separat sub **PolyForm Noncommercial License 1.0.0**. Consultați [ragtime/LICENSE](ragtime/LICENSE) pentru detalii.

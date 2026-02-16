@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Questions & Discussion
+    url: https://github.com/EconLab-AI/Ultrabrain/discussions
+    about: Ask questions or start a discussion (not a bug or feature request)
+  - name: Documentation
+    url: https://github.com/EconLab-AI/Ultrabrain#readme
+    about: Check the README for setup and configuration guides

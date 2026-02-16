@@ -49,7 +49,7 @@
 
 <p align="center">
   <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-AGPL%203.0-blue.svg" alt="License">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
   </a>
   <a href="package.json">
     <img src="https://img.shields.io/badge/version-6.5.0-green.svg" alt="Version">
@@ -274,7 +274,7 @@ Katkı iş akışı için [Geliştirme Kılavuzu](https://docs.ultrabrain.ai/dev
 
 ## Lisans
 
-Bu proje **GNU Affero General Public License v3.0** (AGPL-3.0) altında lisanslanmıştır.
+Bu proje **MIT License** (MIT) altında lisanslanmıştır.
 
 Telif Hakkı (C) 2025 Giuliano Falco (@giulianofalco). Tüm hakları saklıdır.
 
@@ -283,8 +283,7 @@ Tam detaylar için [LICENSE](LICENSE) dosyasına bakın.
 **Bu Ne Anlama Gelir:**
 
 - Bu yazılımı özgürce kullanabilir, değiştirebilir ve dağıtabilirsiniz
-- Değiştirip bir ağ sunucusunda dağıtırsanız, kaynak kodunuzu kullanılabilir hale getirmelisiniz
-- Türev çalışmalar da AGPL-3.0 altında lisanslanmalıdır
+- Türev çalışmalar da MIT altında lisanslanmalıdır
 - Bu yazılım için HİÇBİR GARANTİ yoktur
 
 **Ragtime Hakkında Not**: `ragtime/` dizini ayrı olarak **PolyForm Noncommercial License 1.0.0** altında lisanslanmıştır. Detaylar için [ragtime/LICENSE](ragtime/LICENSE) dosyasına bakın.

@@ -6,7 +6,7 @@
     "name": "Giuliano Falco"
   },
   "repository": "https://github.com/EconLab-AI/Ultrabrain",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "keywords": [
     "memory",
     "context",

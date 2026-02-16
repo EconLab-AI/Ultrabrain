@@ -49,7 +49,7 @@
 
 <p align="center">
   <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-AGPL%203.0-blue.svg" alt="License">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
   </a>
   <a href="package.json">
     <img src="https://img.shields.io/badge/version-6.5.0-green.svg" alt="Version">
@@ -274,17 +274,16 @@ Katso [Kehitysopas](https://docs.ultrabrain.ai/development) osallistumisen työn
 
 ## Lisenssi
 
-Tämä projekti on lisensoitu **GNU Affero General Public License v3.0** (AGPL-3.0) -lisenssillä.
+Tämä projekti on lisensoitu **MIT License** (MIT) -lisenssillä.
 
-Copyright (C) 2025 Giuliano Falco (@giulianofalco). Kaikki oikeudet pidätetään.
+Copyright (c) 2026 Giuliano Falco (@giulianofalco). Kaikki oikeudet pidätetään.
 
 Katso [LICENSE](LICENSE)-tiedosto täydellisistä yksityiskohdista.
 
 **Mitä tämä tarkoittaa:**
 
 - Voit käyttää, muokata ja jakaa tätä ohjelmistoa vapaasti
-- Jos muokkaat ja otat käyttöön verkkopalvelimella, sinun on asetettava lähdekoodisi saataville
-- Johdannaisten teosten on myös oltava AGPL-3.0-lisensoituja
+- Johdannaisten teosten on myös oltava MIT-lisensoituja
 - Tälle ohjelmistolle EI OLE TAKUUTA
 
 **Huomautus Ragtimesta**: `ragtime/`-hakemisto on erikseen lisensoitu **PolyForm Noncommercial License 1.0.0** -lisenssillä. Katso [ragtime/LICENSE](ragtime/LICENSE) yksityiskohdista.
