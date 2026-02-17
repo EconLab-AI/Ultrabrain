@@ -84,7 +84,7 @@ export class SettingsDefaultsManager {
     ULTRABRAIN_OPENROUTER_MAX_CONTEXT_MESSAGES: '20',  // Max messages in context window
     ULTRABRAIN_OPENROUTER_MAX_TOKENS: '100000',  // Max estimated tokens (~100k safety limit)
     ULTRABRAIN_GROQ_API_KEY: '',  // Empty by default, can be set via UI or env
-    ULTRABRAIN_GROQ_MODEL: 'openai/gpt-oss-120b',  // Default Groq model (GPT-OSS 120B, free tier)
+    ULTRABRAIN_GROQ_MODEL: 'meta-llama/llama-4-scout-17b-16e-instruct',  // Default Groq model (Llama 4 Scout, free tier)
     // System Configuration
     ULTRABRAIN_DATA_DIR: join(homedir(), '.ultrabrain'),
     ULTRABRAIN_LOG_LEVEL: 'INFO',

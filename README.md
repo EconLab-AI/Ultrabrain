@@ -288,7 +288,7 @@ Choose from **4 AI providers** for observation processing — switch any time vi
 
 | Provider | Cost | Model | Notes |
 |----------|------|-------|-------|
-| **Groq** (default) | **Free** | GPT-OSS 120B | 14,400 req/day free tier. UltraBrain uses ~186/day (1.3%) |
+| **Groq** (default) | **Free** | Llama 4 Scout | 14,400 req/day free tier. UltraBrain uses ~186/day (1.3%) |
 | **OpenRouter** | Free/Paid | 100+ models | DeepSeek R1, MiniMax, and more |
 | **Gemini** | Free/Paid | Flash Lite, Flash | Google AI Studio free tier |
 | **Claude** | Subscription/API | Haiku, Sonnet, Opus | Uses your Claude Code CLI subscription |
@@ -429,7 +429,7 @@ Settings are managed in `~/.ultrabrain/settings.json` (auto-created on first run
 |---|---|---|
 | `ULTRABRAIN_PROVIDER` | `groq` | AI provider (`groq` / `claude` / `gemini` / `openrouter`) |
 | `ULTRABRAIN_GROQ_API_KEY` | | Groq API key (free at console.groq.com) |
-| `ULTRABRAIN_GROQ_MODEL` | `openai/gpt-oss-120b` | Groq model |
+| `ULTRABRAIN_GROQ_MODEL` | `meta-llama/llama-4-scout-17b-16e-instruct` | Groq model |
 | `ULTRABRAIN_WORKER_PORT` | `37777` | Worker API port |
 | `ULTRABRAIN_CONTEXT_OBSERVATIONS` | `50` | Observations per context injection |
 | `ULTRABRAIN_LOG_LEVEL` | `INFO` | Log verbosity |

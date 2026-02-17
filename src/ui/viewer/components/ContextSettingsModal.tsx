@@ -423,7 +423,7 @@ export function ContextSettingsModal({
                   <option value="claude">Claude (uses your Claude account)</option>
                   <option value="gemini">Gemini (uses API key)</option>
                   <option value="openrouter">OpenRouter (multi-model)</option>
-                  <option value="groq">Groq (free tier, GPT-OSS 120B)</option>
+                  <option value="groq">Groq (free tier, Llama 4 Scout)</option>
                 </select>
               </FormField>
 
@@ -525,13 +525,13 @@ export function ContextSettingsModal({
                   </FormField>
                   <FormField
                     label="Groq Model"
-                    tooltip="Model identifier from Groq (e.g., openai/gpt-oss-120b)"
+                    tooltip="Model identifier from Groq (e.g., meta-llama/llama-4-scout-17b-16e-instruct)"
                   >
                     <input
                       type="text"
-                      value={formState.ULTRABRAIN_GROQ_MODEL || 'openai/gpt-oss-120b'}
+                      value={formState.ULTRABRAIN_GROQ_MODEL || 'meta-llama/llama-4-scout-17b-16e-instruct'}
                       onChange={(e) => updateSetting('ULTRABRAIN_GROQ_MODEL', e.target.value)}
-                      placeholder="openai/gpt-oss-120b"
+                      placeholder="meta-llama/llama-4-scout-17b-16e-instruct"
                     />
                   </FormField>
                 </>

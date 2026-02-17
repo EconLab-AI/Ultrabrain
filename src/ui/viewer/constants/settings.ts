@@ -17,7 +17,7 @@ export const DEFAULT_SETTINGS = {
   ULTRABRAIN_OPENROUTER_SITE_URL: '',
   ULTRABRAIN_OPENROUTER_APP_NAME: 'ultrabrain',
   ULTRABRAIN_GROQ_API_KEY: '',
-  ULTRABRAIN_GROQ_MODEL: 'openai/gpt-oss-120b',
+  ULTRABRAIN_GROQ_MODEL: 'meta-llama/llama-4-scout-17b-16e-instruct',
   ULTRABRAIN_GEMINI_RATE_LIMITING_ENABLED: 'true',
 
   // Token Economics (all true for backwards compatibility)

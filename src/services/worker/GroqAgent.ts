@@ -2,7 +2,7 @@
  * GroqAgent: Groq-based observation extraction
  *
  * Alternative to OpenRouterAgent that uses Groq's free tier API.
- * Groq offers 14,400 req/day free with GPT-OSS 120B.
+ * Groq offers 14,400 req/day free with Llama 4 Scout.
  * UltraBrain only needs ~186 calls/day (1.3% of limit).
  *
  * API is OpenAI-compatible, identical format to OpenRouter.
@@ -437,7 +437,7 @@ export class GroqAgent {
     const apiKey = settings.ULTRABRAIN_GROQ_API_KEY || getCredential('GROQ_API_KEY') || '';
 
     // Model: from settings or default
-    const model = settings.ULTRABRAIN_GROQ_MODEL || 'openai/gpt-oss-120b';
+    const model = settings.ULTRABRAIN_GROQ_MODEL || 'meta-llama/llama-4-scout-17b-16e-instruct';
 
     return { apiKey, model };
   }
