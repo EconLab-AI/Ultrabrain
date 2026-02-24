@@ -27,6 +27,7 @@ import { cleanupProcessedMessages } from './SessionCleanupHelper.js';
 import { autoLabelObservation, autoLabelSummary, detectTags } from '../AutoLabeler.js';
 import { populateKanbanFromObservation } from '../KanbanPopulator.js';
 import { processCompletionSignals } from '../TaskLifecycleManager.js';
+import { resolveMatchingObservations } from '../ObservationLifecycleManager.js';
 
 /**
  * Process agent response text (parse XML, save to database, sync to LanceDB, broadcast SSE)
@@ -243,6 +244,9 @@ async function syncAndBroadcastObservations(
 
       // Auto-resolve existing tasks if this observation signals completion
       processCompletionSignals(dbManager.getSessionStore().db, obsId, obs, session.project);
+
+      // Auto-resolve matching observations (bug discovery → resolved when bugfix arrives)
+      resolveMatchingObservations(dbManager.getSessionStore().db, obsId, obs, session.project);
     } catch (error) {
       logger.debug('AUTOLABEL', 'Auto-label failed (non-critical)', { obsId }, error as Error);
     }

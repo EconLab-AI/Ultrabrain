@@ -283,9 +283,9 @@ export class SettingsRoutes extends BaseRouteHandler {
   private validateSettings(settings: any): { valid: boolean; error?: string } {
     // Validate ULTRABRAIN_PROVIDER
     if (settings.ULTRABRAIN_PROVIDER) {
-    const validProviders = ['claude', 'gemini', 'openrouter'];
-    if (!validProviders.includes(settings.ULTRABRAIN_PROVIDER)) {
-      return { valid: false, error: 'ULTRABRAIN_PROVIDER must be "claude", "gemini", or "openrouter"' };
+      const validProviders = ['local', 'claude', 'gemini', 'openrouter', 'groq'];
+      if (!validProviders.includes(settings.ULTRABRAIN_PROVIDER)) {
+        return { valid: false, error: 'ULTRABRAIN_PROVIDER must be "local", "claude", "gemini", "openrouter", or "groq"' };
       }
     }
 

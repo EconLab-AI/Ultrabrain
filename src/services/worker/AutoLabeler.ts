@@ -12,25 +12,60 @@ import { logger } from '../../utils/logger.js';
 
 /** Maps observation.type → system tag name */
 const TYPE_TAG_MAP: Record<string, string> = {
-  bugfix: 'bug',
+  bugfix: 'fix',       // Past-tense: bug was fixed (use 'fix' not 'bug' — the bug is resolved)
   decision: 'decision',
-  feature: 'feature',
+  feature: 'feature',  // Past-tense: feature was built
   refactor: 'refactor',
-  discovery: 'learning',
-  change: 'feature',
+  // NOTE: 'discovery' does NOT auto-map to 'learning' - too many false positives
+  // NOTE: 'change' does NOT auto-map to 'feature' - too many false positives from local agent
+  //        Every code edit was being tagged as 'feature', inflating counts
 };
+
+/**
+ * Titles/patterns that should NEVER be tagged (garbage filter).
+ * These are generic session artifacts or mechanical Local Agent outputs.
+ */
+const GARBAGE_TITLE_PATTERNS: RegExp[] = [
+  /^Initial User Request$/i,
+  /^Started? Server$/i,
+  /^Stop(?:ped)? Server$/i,
+  /^Server Restart$/i,
+  /^User (?:prompt|message|request)$/i,
+  /^Session (?:start|end|init)/i,
+  /^no (?:specific )?details/i,
+  // Local Agent mechanical titles that shouldn't be tagged
+  /^(?:Read|Update|Extend|Refactor|Create|Fix|Multi-edit)\s+\w+\s+(?:component|route|hook|test|styles|config|docs|migration)$/i,
+  /^Explore codebase/i,
+  /^Search for "/i,
+  /^Find files matching/i,
+  /^Run (?:shell command|`)/i,
+  /^(?:Syntax|Lint) check/i,
+  /^(?:Check|Test) (?:health|endpoint)/i,
+  /^Delegate:/i,
+];
 
 /** Keyword patterns → tag names (matched against observation text/title/narrative) */
 const TEXT_TAG_RULES: [RegExp, string][] = [
+  // High-confidence: explicit markers
   [/\b(todo|TODO|fixme|FIXME|hack|HACK)\b/, 'todo'],
-  [/\b(idea|brainstorm|concept|proposal)\b/i, 'idea'],
-  [/\b(bug|crash|broken|error|fail)\b/i, 'bug'],
-  [/\b(learn|discover|found|realize|insight)\b/i, 'learning'],
-  [/\b(security|auth|vulnerability|xss|injection)\b/i, 'security'],
-  [/\b(perf|performance|optimize|speed|latency)\b/i, 'performance'],
-  [/\b(deploy|docker|ci|cd|pipeline|infra)\b/i, 'devops'],
-  [/\b(doc|readme|documentation)\b/i, 'docs'],
-  [/\b(planned|future|roadmap|geplant|zukünftig|planned-feature)\b/i, 'planned-feature'],
+
+  // Ideas: require context words, not just "idea" alone
+  [/\b(brainstorm|proposal|could\s+(?:we|you)|might\s+want|consider\s+adding|future\s+enhancement)\b/i, 'idea'],
+  [/\b(roadmap|geplant|zukünftig|planned-feature)\b/i, 'planned-feature'],
+
+  // Bugs: require error/failure context, not just the word "error" in logs
+  [/\b(crash(?:es|ed|ing)?|broken|fails?\s+(?:to|with|when)|exception|traceback|stack\s*trace)\b/i, 'bug'],
+  [/\b(regression|defect|malfunction|not\s+working)\b/i, 'bug'],
+
+  // Learning: require actual insight words (not just "found a file")
+  [/\b(learned?|lesson|insight|realize[ds]?|gotcha|pitfall|caveat|trick|important\s+to\s+know)\b/i, 'learning'],
+  [/\b(TIL|til|best\s+practice|anti-?pattern|root\s+cause)\b/i, 'learning'],
+
+  // Infrastructure tags (unchanged, low false-positive risk)
+  [/\b(security|auth|vulnerability|xss|injection|CVE)\b/i, 'security'],
+  [/\b(perf|performance|optimize|speed|latency|benchmark)\b/i, 'performance'],
+  [/\b(deploy|docker|ci|cd|pipeline|infra|kubernetes)\b/i, 'devops'],
+  [/\b(doc|readme|documentation|changelog)\b/i, 'docs'],
 ];
 
 /** Cached tag name → id map (populated once per worker lifetime) */
@@ -50,7 +85,8 @@ export function resetTagCache(): void {
 }
 
 /**
- * Determine which tags should be applied to an observation
+ * Determine which tags should be applied to an observation.
+ * Returns empty array for garbage observations (filtered out).
  */
 export function detectTags(
   type: string,
@@ -58,6 +94,16 @@ export function detectTags(
   narrative: string | null,
   text: string | null
 ): string[] {
+  // Garbage filter: skip observations with generic/useless titles
+  if (title && GARBAGE_TITLE_PATTERNS.some(p => p.test(title))) {
+    return [];
+  }
+
+  // Skip observations with empty/generic narratives
+  if (narrative && /no (?:specific )?details (?:or requests )?were provided/i.test(narrative)) {
+    return [];
+  }
+
   const tags = new Set<string>();
 
   // 1. Map observation type → tag

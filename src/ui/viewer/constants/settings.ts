@@ -9,7 +9,7 @@ export const DEFAULT_SETTINGS = {
   ULTRABRAIN_WORKER_HOST: '127.0.0.1',
 
   // AI Provider Configuration
-  ULTRABRAIN_PROVIDER: 'groq',
+  ULTRABRAIN_PROVIDER: 'local',
   ULTRABRAIN_GEMINI_API_KEY: '',
   ULTRABRAIN_GEMINI_MODEL: 'gemini-2.5-flash-lite',
   ULTRABRAIN_OPENROUTER_API_KEY: '',

@@ -73,7 +73,7 @@ With the **Claude Desktop Integration**, you can brainstorm in Claude Desktop, s
   <tbody>
     <tr>
       <td><strong>AI Processing</strong></td>
-      <td><strong>Free</strong> — Groq free tier (14,400 req/day), or Claude, Gemini, OpenRouter</td>
+      <td><strong>Free</strong> — Local Agent (zero-cost default), Groq free tier, or Claude, Gemini, OpenRouter</td>
     </tr>
     <tr>
       <td><strong>Vector Engine</strong></td>
@@ -117,7 +117,7 @@ With the **Claude Desktop Integration**, you can brainstorm in Claude Desktop, s
     </tr>
     <tr>
       <td><strong>Token Savings</strong></td>
-      <td><strong>~80%</strong> via progressive disclosure</td>
+      <td><strong>~97%</strong> via Local Agent + progressive disclosure</td>
     </tr>
     <tr>
       <td><strong>Embedding</strong></td>
@@ -243,8 +243,9 @@ Claude sees a concise summary of your project history at the start of every sess
 │                                                          │
 │  ┌─────────┐  ┌──────────────┐  ┌────────────────────┐  │
 │  │ SQLite  │  │   LanceDB    │  │   AI Providers      │  │
-│  │  (FTS5) │  │  (Vectors)   │  │  Groq · Claude      │  │
-│  └─────────┘  └──────────────┘  │  Gemini · OpenRouter │  │
+│  │  (FTS5) │  │  (Vectors)   │  │  Local · Groq        │  │
+│  └─────────┘  └──────────────┘  │  Claude · Gemini     │  │
+│                                  │  OpenRouter          │  │
 │                                  └────────────────────┘  │
 │                                                          │
 │  ┌──────────────────────────────────────────────────┐    │
@@ -253,6 +254,7 @@ Claude sees a concise summary of your project history at the start of every sess
 │  │                                                    │    │
 │  │  Terminal · Automation · Analytics                 │    │
 │  │  Session Recording · Knowledge Graph              │    │
+│  │  Local Agent · Data Quality                       │    │
 │  │  Project Management · CLAUDE.md Manager           │    │
 │  │  Kanban Board · Ralph Loop · Agent Teams          │    │
 │  │  Memory Feed · Claude Desktop Import              │    │
@@ -284,16 +286,17 @@ Claude sees a concise summary of your project history at the start of every sess
 
 ### Multi-Provider AI Processing
 
-Choose from **4 AI providers** for observation processing — switch any time via the web UI:
+Choose from **5 AI providers** for observation processing — switch any time via the web UI:
 
 | Provider | Cost | Model | Notes |
 |----------|------|-------|-------|
-| **Groq** (default) | **Free** | Llama 4 Scout | 14,400 req/day free tier. UltraBrain uses ~186/day (1.3%) |
+| **Local** (default) | **Free** | Zero-token extraction | No API key needed. Extracts observations directly from tool data |
+| **Groq** | **Free** | Llama 4 Scout | 14,400 req/day free tier. UltraBrain uses ~186/day (1.3%) |
 | **OpenRouter** | Free/Paid | 100+ models | DeepSeek R1, MiniMax, and more |
 | **Gemini** | Free/Paid | Flash Lite, Flash | Google AI Studio free tier |
 | **Claude** | Subscription/API | Haiku, Sonnet, Opus | Uses your Claude Code CLI subscription |
 
-Default: **Groq** — completely free, no credit card required. Get an API key at [console.groq.com](https://console.groq.com/keys).
+Default: **Local** — zero-cost, zero-latency, no API key required. Uses tool-specific extractors to build observations directly from Claude's tool output. LLM providers are only used for optional session summaries.
 
 ### Persistent Memory
 Context survives across sessions, days, and weeks. Claude knows what you built yesterday.
@@ -330,6 +333,7 @@ A full-featured PM suite built into the web viewer:
 - **Todos** — Task tracking with Kanban integration
 - **Ideas** — Capture and organize feature ideas and brainstorming results
 - **Learnings** — Chronological timeline of all captured knowledge, grouped by date
+- **Plans** — Browse and view Claude's implementation plans from `~/.claude/plans/`
 - **Tags** — Full tag management system with 13 built-in system tags
 - **Kanban Board** — Drag-and-drop task management (Todo, In Progress, Done) with one-click backfill from observations
 
@@ -362,7 +366,7 @@ Two-way integration: **MCP Bridge** for real-time knowledge sharing between Clau
 LanceDB + all-MiniLM-L6-v2 embeddings find the most relevant memories, not just keyword matches. Search in <2ms.
 
 ### Progressive Disclosure
-Layered memory retrieval: summaries first, full details on demand. **~80% token savings** compared to loading everything.
+Layered memory retrieval: summaries first, full details on demand. **~97% token savings** with Local Agent + progressive disclosure.
 
 ### MCP Search Tools
 Query your project history with natural language:
@@ -427,7 +431,7 @@ Settings are managed in `~/.ultrabrain/settings.json` (auto-created on first run
 
 | Setting | Default | Description |
 |---|---|---|
-| `ULTRABRAIN_PROVIDER` | `groq` | AI provider (`groq` / `claude` / `gemini` / `openrouter`) |
+| `ULTRABRAIN_PROVIDER` | `local` | AI provider (`local` / `groq` / `claude` / `gemini` / `openrouter`) |
 | `ULTRABRAIN_GROQ_API_KEY` | | Groq API key (free at console.groq.com) |
 | `ULTRABRAIN_GROQ_MODEL` | `meta-llama/llama-4-scout-17b-16e-instruct` | Groq model |
 | `ULTRABRAIN_WORKER_PORT` | `37777` | Worker API port |

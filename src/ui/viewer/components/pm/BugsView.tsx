@@ -14,6 +14,8 @@ interface BugItem {
   narrative: string | null;
   project: string;
   created_at_epoch: number;
+  status?: string;
+  relevance_score?: number;
   tags: string[];
 }
 
@@ -31,16 +33,20 @@ export function BugsView({ currentProject }: BugsViewProps) {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
+  const [showResolved, setShowResolved] = useState(false);
 
   useEffect(() => {
     setLoading(true);
-    const params = currentProject ? `?project=${encodeURIComponent(currentProject)}` : '';
-    fetch(`/api/pm/bugs${params}`)
+    const params = new URLSearchParams();
+    if (currentProject) params.set('project', currentProject);
+    if (showResolved) params.set('status', 'all');
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    fetch(`/api/pm/bugs${qs}`)
       .then(r => r.json())
       .then(data => setBugs(data.bugs || []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [currentProject]);
+  }, [currentProject, showResolved]);
 
   const filtered = search
     ? bugs.filter(b =>
@@ -55,10 +61,16 @@ export function BugsView({ currentProject }: BugsViewProps) {
 
   return (
     <div style={{ padding: '1.5rem', maxWidth: '900px' }}>
-      <h2 style={{ margin: '0 0 1rem', fontSize: '1.2rem', fontWeight: 600 }}>
-        Bugs & Fixes
-        <span style={{ fontSize: '0.85rem', opacity: 0.5, marginLeft: '8px' }}>({filtered.length})</span>
-      </h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1rem' }}>
+        <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
+          Bugs & Fixes
+          <span style={{ fontSize: '0.85rem', opacity: 0.5, marginLeft: '8px' }}>({filtered.length})</span>
+        </h2>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', opacity: 0.6, cursor: 'pointer', marginLeft: 'auto' }}>
+          <input type="checkbox" checked={showResolved} onChange={e => setShowResolved(e.target.checked)} />
+          Show resolved
+        </label>
+      </div>
 
       <SearchFilter value={search} onChange={setSearch} placeholder="Search bugs..." />
 
@@ -68,52 +80,64 @@ export function BugsView({ currentProject }: BugsViewProps) {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {filtered.map(bug => (
-            <div
-              key={bug.id}
-              style={{
-                padding: '12px 16px',
-                borderRadius: '8px',
-                border: '1px solid var(--border-color, #333)',
-                cursor: 'pointer',
-              }}
-              onClick={() => setExpandedId(expandedId === bug.id ? null : bug.id)}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{
-                  width: '8px', height: '8px', borderRadius: '50%',
-                  background: bug.tags.includes('fix') ? '#10b981' : '#ef4444',
-                  flexShrink: 0,
-                }} />
-                <span style={{ opacity: 0.4, fontSize: '0.7rem', minWidth: '30px' }}>#{bug.id}</span>
-                <span style={{ flex: 1, fontSize: '0.85rem', fontWeight: 500 }}>
-                  {bug.title || bug.subtitle || '(untitled)'}
-                </span>
-                <span style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-                  {bug.tags.map(tag => (
-                    <TagBadge key={tag} name={tag} color={TAG_COLORS[tag] || '#6366f1'} />
-                  ))}
-                </span>
-                <span style={{ opacity: 0.4, fontSize: '0.7rem', flexShrink: 0 }}>
-                  {formatDate(bug.created_at_epoch)}
-                </span>
-              </div>
-
-              {expandedId === bug.id && bug.narrative && (
-                <div style={{
-                  marginTop: '10px',
-                  paddingTop: '10px',
-                  borderTop: '1px solid var(--border-color, #333)',
-                  fontSize: '0.8rem',
-                  opacity: 0.8,
-                  lineHeight: 1.5,
-                  whiteSpace: 'pre-wrap',
-                }}>
-                  {bug.narrative}
+          {filtered.map(bug => {
+            const isResolved = bug.status === 'resolved' || bug.status === 'archived' || bug.status === 'stale';
+            return (
+              <div
+                key={bug.id}
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color, #333)',
+                  cursor: 'pointer',
+                  opacity: isResolved ? 0.45 : 1,
+                }}
+                onClick={() => setExpandedId(expandedId === bug.id ? null : bug.id)}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{
+                    width: '8px', height: '8px', borderRadius: '50%',
+                    background: isResolved ? '#6b7280' : bug.tags.includes('fix') ? '#10b981' : '#ef4444',
+                    flexShrink: 0,
+                  }} />
+                  <span style={{ opacity: 0.4, fontSize: '0.7rem', minWidth: '30px' }}>#{bug.id}</span>
+                  <span style={{
+                    flex: 1, fontSize: '0.85rem', fontWeight: 500,
+                    textDecoration: isResolved ? 'line-through' : 'none',
+                  }}>
+                    {bug.title || bug.subtitle || '(untitled)'}
+                  </span>
+                  {isResolved && (
+                    <span style={{ fontSize: '0.65rem', padding: '1px 6px', borderRadius: '4px', background: '#374151', color: '#9ca3af' }}>
+                      {bug.status}
+                    </span>
+                  )}
+                  <span style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                    {bug.tags.map(tag => (
+                      <TagBadge key={tag} name={tag} color={TAG_COLORS[tag] || '#6366f1'} />
+                    ))}
+                  </span>
+                  <span style={{ opacity: 0.4, fontSize: '0.7rem', flexShrink: 0 }}>
+                    {formatDate(bug.created_at_epoch)}
+                  </span>
                 </div>
-              )}
-            </div>
-          ))}
+
+                {expandedId === bug.id && bug.narrative && (
+                  <div style={{
+                    marginTop: '10px',
+                    paddingTop: '10px',
+                    borderTop: '1px solid var(--border-color, #333)',
+                    fontSize: '0.8rem',
+                    opacity: 0.8,
+                    lineHeight: 1.5,
+                    whiteSpace: 'pre-wrap',
+                  }}>
+                    {bug.narrative}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

@@ -13,6 +13,7 @@ import { TodosView } from './components/pm/TodosView';
 import { IdeasView } from './components/pm/IdeasView';
 import { LearningsView } from './components/pm/LearningsView';
 import { TagsView } from './components/pm/TagsView';
+import { PlansView } from './components/pm/PlansView';
 import { CurrentStateView } from './components/pm/CurrentStateView';
 import { ClaudeMdManager } from './components/claudemd/ClaudeMdManager';
 import { LoopManager } from './components/loop/LoopManager';
@@ -158,6 +159,8 @@ export function App() {
         return <IdeasView currentProject={pmProject} />;
       case 'pm-learnings':
         return <LearningsView currentProject={pmProject} />;
+      case 'pm-plans':
+        return <PlansView currentProject={pmProject} />;
       case 'pm-tags':
         return <TagsView />;
       case 'kanban':

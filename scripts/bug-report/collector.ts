@@ -8,7 +8,7 @@ const execAsync = promisify(exec);
 
 export interface SystemDiagnostics {
   versions: {
-    claudeMem: string;
+    ultrabrain: string;
     claudeCode: string;
     node: string;
     bun: string;
@@ -59,7 +59,7 @@ function sanitizePath(filePath: string): string {
   return filePath.replace(homeDir, "~");
 }
 
-async function getClaudememVersion(): Promise<string> {
+async function getUltrabrainVersion(): Promise<string> {
   try {
     const packageJsonPath = path.join(process.cwd(), "package.json");
     const content = await fs.readFile(packageJsonPath, "utf-8");
@@ -189,15 +189,15 @@ export async function collectDiagnostics(
   const isDevMode = cwd.includes("ultrabrain") && !cwd.includes(".claude");
 
   // Collect version information
-  const [claudeMem, claudeCode, bun, osVersion] = await Promise.all([
-    getClaudememVersion(),
+  const [ultrabrain, claudeCode, bun, osVersion] = await Promise.all([
+    getUltrabrainVersion(),
     getClaudeCodeVersion(),
     getBunVersion(),
     getOsVersion(),
   ]);
 
   const versions = {
-    claudeMem,
+    ultrabrain,
     claudeCode,
     node: process.version,
     bun,
@@ -287,7 +287,7 @@ export function formatDiagnostics(diagnostics: SystemDiagnostics): string {
   let output = "";
 
   output += "## Environment\n\n";
-  output += `- **UltraBrain**: ${diagnostics.versions.claudeMem}\n`;
+  output += `- **UltraBrain**: ${diagnostics.versions.ultrabrain}\n`;
   output += `- **Claude Code**: ${diagnostics.versions.claudeCode}\n`;
   output += `- **Node.js**: ${diagnostics.versions.node}\n`;
   output += `- **Bun**: ${diagnostics.versions.bun}\n`;

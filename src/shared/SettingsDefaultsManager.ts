@@ -19,7 +19,7 @@ export interface SettingsDefaults {
   ULTRABRAIN_WORKER_HOST: string;
   ULTRABRAIN_SKIP_TOOLS: string;
   // AI Provider Configuration
-  ULTRABRAIN_PROVIDER: string;  // 'claude' | 'gemini' | 'openrouter' | 'groq'
+  ULTRABRAIN_PROVIDER: string;  // 'local' | 'claude' | 'gemini' | 'openrouter' | 'groq'
   ULTRABRAIN_CLAUDE_AUTH_METHOD: string;  // 'cli' | 'api' - how Claude provider authenticates
   ULTRABRAIN_ANTHROPIC_API_KEY: string;  // Anthropic API key (required when auth_method is 'api')
   ULTRABRAIN_GEMINI_API_KEY: string;
@@ -71,7 +71,7 @@ export class SettingsDefaultsManager {
     ULTRABRAIN_WORKER_HOST: '127.0.0.1',
     ULTRABRAIN_SKIP_TOOLS: 'ListMcpResourcesTool,SlashCommand,Skill,TodoWrite,AskUserQuestion',
     // AI Provider Configuration
-    ULTRABRAIN_PROVIDER: 'groq',  // Default to Groq (free tier, 14,400 req/day)
+    ULTRABRAIN_PROVIDER: 'local',  // Default to Local (zero tokens for observations, LLM only for summaries)
     ULTRABRAIN_CLAUDE_AUTH_METHOD: 'cli',  // Default to CLI subscription billing (not API key)
     ULTRABRAIN_ANTHROPIC_API_KEY: '',  // Empty by default, required when auth_method is 'api'
     ULTRABRAIN_GEMINI_API_KEY: '',  // Empty by default, can be set via UI or env

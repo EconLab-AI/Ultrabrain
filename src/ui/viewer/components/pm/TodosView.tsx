@@ -14,6 +14,8 @@ interface TodoObservation {
   narrative: string | null;
   project: string;
   created_at_epoch: number;
+  status?: string;
+  relevance_score?: number;
   tags: string[];
 }
 
@@ -48,11 +50,15 @@ export function TodosView({ currentProject }: TodosViewProps) {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'all' | 'observations' | 'tasks'>('all');
   const [search, setSearch] = useState('');
+  const [showResolved, setShowResolved] = useState(false);
 
   useEffect(() => {
     setLoading(true);
-    const params = currentProject ? `?project=${encodeURIComponent(currentProject)}` : '';
-    fetch(`/api/pm/todos${params}`)
+    const params = new URLSearchParams();
+    if (currentProject) params.set('project', currentProject);
+    if (showResolved) params.set('status', 'all');
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    fetch(`/api/pm/todos${qs}`)
       .then(r => r.json())
       .then(data => {
         setObservations(data.observations || []);
@@ -60,7 +66,7 @@ export function TodosView({ currentProject }: TodosViewProps) {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [currentProject]);
+  }, [currentProject, showResolved]);
 
   const handleTaskStatusToggle = async (task: Task) => {
     const newStatus = task.status === 'done' ? 'todo' : 'done';
@@ -93,12 +99,18 @@ export function TodosView({ currentProject }: TodosViewProps) {
 
   return (
     <div style={{ padding: '1.5rem', maxWidth: '900px' }}>
-      <h2 style={{ margin: '0 0 1rem', fontSize: '1.2rem', fontWeight: 600 }}>
-        Todos
-        <span style={{ fontSize: '0.85rem', opacity: 0.5, marginLeft: '8px' }}>
-          ({filteredObs.length} tagged + {filteredTasks.length} tasks)
-        </span>
-      </h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1rem' }}>
+        <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
+          Todos
+          <span style={{ fontSize: '0.85rem', opacity: 0.5, marginLeft: '8px' }}>
+            ({filteredObs.length} tagged + {filteredTasks.length} tasks)
+          </span>
+        </h2>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', opacity: 0.6, cursor: 'pointer', marginLeft: 'auto' }}>
+          <input type="checkbox" checked={showResolved} onChange={e => setShowResolved(e.target.checked)} />
+          Show resolved
+        </label>
+      </div>
 
       <SearchFilter value={search} onChange={setSearch} placeholder="Search todos..." />
 
@@ -129,16 +141,27 @@ export function TodosView({ currentProject }: TodosViewProps) {
         <div style={{ marginBottom: '1.5rem' }}>
           {tab === 'all' && <h3 style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.7, marginBottom: '8px' }}>From Observations</h3>}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            {filteredObs.map(obs => (
+            {filteredObs.map(obs => {
+              const isResolved = obs.status === 'resolved' || obs.status === 'archived' || obs.status === 'stale';
+              return (
               <div key={obs.id} style={{
                 display: 'flex', alignItems: 'center', gap: '8px',
                 padding: '8px 12px', borderRadius: '6px',
                 border: '1px solid var(--border-color, #333)', fontSize: '0.8rem',
+                opacity: isResolved ? 0.45 : 1,
               }}>
                 <span style={{ opacity: 0.4, fontSize: '0.7rem' }}>#{obs.id}</span>
-                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{
+                  flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  textDecoration: isResolved ? 'line-through' : 'none',
+                }}>
                   {obs.title || obs.subtitle || '(untitled)'}
                 </span>
+                {isResolved && (
+                  <span style={{ fontSize: '0.65rem', padding: '1px 6px', borderRadius: '4px', background: '#374151', color: '#9ca3af' }}>
+                    {obs.status}
+                  </span>
+                )}
                 <span style={{ display: 'flex', gap: '4px' }}>
                   {obs.tags.map(tag => (
                     <TagBadge key={tag} name={tag} color={TAG_COLORS[tag] || '#6366f1'} />
@@ -146,7 +169,8 @@ export function TodosView({ currentProject }: TodosViewProps) {
                 </span>
                 <span style={{ opacity: 0.4, fontSize: '0.7rem' }}>{formatDate(obs.created_at_epoch)}</span>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

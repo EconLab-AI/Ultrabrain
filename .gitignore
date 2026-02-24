@@ -5,26 +5,40 @@ dist/
 .DS_Store
 .env
 .env.local
+.env.*
 *.tmp
 *.temp
 .install-version
+
+# === PRIVATE / SENSITIVE ===
+# Complete .claude directory (personal settings, agents, local configs)
 .claude/settings.local.json
 .claude/agents/
 .claude/skills/
+.claude/*.local.md
+
+# Private strategy & business documents
+private/
+
+# Marketing video files (too large for git)
+marketing/**/*.mp4
+
+# === BUILD / RUNTIME ===
 plugin/data/
 plugin/data.backup/
 package-lock.json
 bun.lock
-private/
-datasets/
 
 # Generated UI files (built from viewer-template.html)
 src/ui/viewer.html
 
-# Local MCP server config (for development only)
+# === IDE / EDITOR ===
 .mcp.json
 .cursor/
+.idea/
+.vscode/
 
+# === PATH SAFETY ===
 # Prevent literal tilde directories (path validation bug artifacts)
 ~*/
 
@@ -34,6 +48,3 @@ src/ui/viewer.html
 
 # Test artifacts
 test-results/
-
-# Ignore WebStorm project files (for dinosaur IDE users)
-.idea/

@@ -156,7 +156,7 @@ async function main() {
 
   // Show summary
   console.log("📋 System Summary:");
-  console.log(`   UltraBrain: v${diagnostics.versions.claudeMem}`);
+  console.log(`   UltraBrain: v${diagnostics.versions.ultrabrain}`);
   console.log(`   Claude Code: ${diagnostics.versions.claudeCode}`);
   console.log(
     `   Platform: ${diagnostics.platform.osVersion} (${diagnostics.platform.arch})`

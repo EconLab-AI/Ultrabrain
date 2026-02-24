@@ -15,6 +15,7 @@ import { SDKAgent } from '../../SDKAgent.js';
 import { GeminiAgent, isGeminiSelected, isGeminiAvailable } from '../../GeminiAgent.js';
 import { OpenRouterAgent, isOpenRouterSelected, isOpenRouterAvailable } from '../../OpenRouterAgent.js';
 import { GroqAgent, isGroqSelected, isGroqAvailable } from '../../GroqAgent.js';
+import { LocalAgent, isLocalSelected } from '../../LocalAgent.js';
 import type { WorkerService } from '../../../worker-service.js';
 import { BaseRouteHandler } from '../BaseRouteHandler.js';
 import { SessionEventBroadcaster } from '../../events/SessionEventBroadcaster.js';
@@ -35,6 +36,7 @@ export class SessionRoutes extends BaseRouteHandler {
     private geminiAgent: GeminiAgent,
     private openRouterAgent: OpenRouterAgent,
     private groqAgent: GroqAgent,
+    private localAgent: LocalAgent,
     private eventBroadcaster: SessionEventBroadcaster,
     private workerService: WorkerService
   ) {
@@ -52,7 +54,11 @@ export class SessionRoutes extends BaseRouteHandler {
    * Note: Session linking via contentSessionId allows provider switching mid-session.
    * The conversationHistory on ActiveSession maintains context across providers.
    */
-  private getActiveAgent(): SDKAgent | GeminiAgent | OpenRouterAgent | GroqAgent {
+  private getActiveAgent(): SDKAgent | GeminiAgent | OpenRouterAgent | GroqAgent | LocalAgent {
+    if (isLocalSelected()) {
+      logger.debug('SESSION', 'Using Local agent (zero tokens)');
+      return this.localAgent;
+    }
     if (isGroqSelected()) {
       if (isGroqAvailable()) {
         logger.debug('SESSION', 'Using Groq agent');
@@ -83,7 +89,10 @@ export class SessionRoutes extends BaseRouteHandler {
   /**
    * Get the currently selected provider name
    */
-  private getSelectedProvider(): 'claude' | 'gemini' | 'openrouter' | 'groq' {
+  private getSelectedProvider(): 'claude' | 'gemini' | 'openrouter' | 'groq' | 'local' {
+    if (isLocalSelected()) {
+      return 'local';
+    }
     if (isGroqSelected() && isGroqAvailable()) {
       return 'groq';
     }
@@ -139,7 +148,7 @@ export class SessionRoutes extends BaseRouteHandler {
    */
   private startGeneratorWithProvider(
     session: ReturnType<typeof this.sessionManager.getSession>,
-    provider: 'claude' | 'gemini' | 'openrouter' | 'groq',
+    provider: 'claude' | 'gemini' | 'openrouter' | 'groq' | 'local',
     source: string
   ): void {
     if (!session) return;
@@ -154,8 +163,8 @@ export class SessionRoutes extends BaseRouteHandler {
       session.abortController = new AbortController();
     }
 
-    const agent = provider === 'groq' ? this.groqAgent : (provider === 'openrouter' ? this.openRouterAgent : (provider === 'gemini' ? this.geminiAgent : this.sdkAgent));
-    const agentName = provider === 'groq' ? 'Groq' : (provider === 'openrouter' ? 'OpenRouter' : (provider === 'gemini' ? 'Gemini' : 'Claude SDK'));
+    const agent = provider === 'local' ? this.localAgent : (provider === 'groq' ? this.groqAgent : (provider === 'openrouter' ? this.openRouterAgent : (provider === 'gemini' ? this.geminiAgent : this.sdkAgent)));
+    const agentName = provider === 'local' ? 'Local' : (provider === 'groq' ? 'Groq' : (provider === 'openrouter' ? 'OpenRouter' : (provider === 'gemini' ? 'Gemini' : 'Claude SDK')));
 
     // Use database count for accurate telemetry (in-memory array is always empty due to FK constraint fix)
     const pendingStore = this.sessionManager.getPendingMessageStore();

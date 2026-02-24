@@ -146,11 +146,14 @@ export function TerminalTab({ onData, dataToWrite, onResize, isActive }: Termina
     };
   }, []);
 
-  // Write incoming data to terminal
+  // Write incoming data to terminal (delta-only: only write new bytes since last write)
   useEffect(() => {
-    if (dataToWrite && dataToWrite !== lastDataRef.current && terminalRef.current) {
-      terminalRef.current.write(dataToWrite);
-      lastDataRef.current = dataToWrite;
+    if (dataToWrite != null && terminalRef.current) {
+      const prevLen = lastDataRef.current.length;
+      if (dataToWrite.length > prevLen) {
+        terminalRef.current.write(dataToWrite.substring(prevLen));
+        lastDataRef.current = dataToWrite;
+      }
     }
   }, [dataToWrite]);
 

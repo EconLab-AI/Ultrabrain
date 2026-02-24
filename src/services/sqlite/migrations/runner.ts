@@ -38,6 +38,7 @@ export class MigrationRunner {
       ['createTerminalSessionsTable', () => this.createTerminalSessionsTable()],
       ['createAutomationTables', () => this.createAutomationTables()],
       ['createTerminalRecordingsTable', () => this.createTerminalRecordingsTable()],
+      ['addObservationLifecycleColumns', () => this.addObservationLifecycleColumns()],
     ];
 
     for (const [name, fn] of migrations) {
@@ -979,5 +980,45 @@ export class MigrationRunner {
 
     this.db.prepare('INSERT OR IGNORE INTO schema_versions (version, applied_at) VALUES (?, ?)').run(27, new Date().toISOString());
     logger.info('DB', 'Created terminal_recordings table');
+  }
+
+  /**
+   * Add lifecycle columns to observations table (migration 28)
+   * - status: active/resolved/stale/archived (for PM view filtering)
+   * - relevance_score: 0.0-1.0 (for knowledge decay)
+   * - linked_observation_id: FK for bug→fix linking
+   * - resolved_at_epoch: timestamp when resolved
+   */
+  private addObservationLifecycleColumns(): void {
+    const applied = this.db.prepare('SELECT version FROM schema_versions WHERE version = ?').get(28) as SchemaVersion | undefined;
+    if (applied) return;
+
+    const info = this.db.query('PRAGMA table_info(observations)').all() as TableColumnInfo[];
+    const columns = info.map((col: any) => col.name);
+
+    if (!columns.includes('status')) {
+      this.db.run("ALTER TABLE observations ADD COLUMN status TEXT NOT NULL DEFAULT 'active'");
+      logger.debug('DB', 'Added status column to observations');
+    }
+    if (!columns.includes('relevance_score')) {
+      this.db.run('ALTER TABLE observations ADD COLUMN relevance_score REAL NOT NULL DEFAULT 1.0');
+      logger.debug('DB', 'Added relevance_score column to observations');
+    }
+    if (!columns.includes('linked_observation_id')) {
+      this.db.run('ALTER TABLE observations ADD COLUMN linked_observation_id INTEGER REFERENCES observations(id)');
+      logger.debug('DB', 'Added linked_observation_id column to observations');
+    }
+    if (!columns.includes('resolved_at_epoch')) {
+      this.db.run('ALTER TABLE observations ADD COLUMN resolved_at_epoch INTEGER');
+      logger.debug('DB', 'Added resolved_at_epoch column to observations');
+    }
+
+    // Indexes for lifecycle queries
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_observations_status ON observations(status)');
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_observations_relevance ON observations(relevance_score)');
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_observations_linked ON observations(linked_observation_id)');
+
+    this.db.prepare('INSERT OR IGNORE INTO schema_versions (version, applied_at) VALUES (?, ?)').run(28, new Date().toISOString());
+    logger.info('DB', 'Added observation lifecycle columns (status, relevance_score, linked_observation_id, resolved_at_epoch)');
   }
 }

@@ -95,6 +95,7 @@ import { SDKAgent } from './worker/SDKAgent.js';
 import { GeminiAgent, isGeminiSelected, isGeminiAvailable } from './worker/GeminiAgent.js';
 import { OpenRouterAgent, isOpenRouterSelected, isOpenRouterAvailable } from './worker/OpenRouterAgent.js';
 import { GroqAgent, isGroqSelected, isGroqAvailable } from './worker/GroqAgent.js';
+import { LocalAgent, isLocalSelected } from './worker/LocalAgent.js';
 import { PaginationHelper } from './worker/PaginationHelper.js';
 import { SettingsManager } from './worker/SettingsManager.js';
 import { SearchManager } from './worker/SearchManager.js';
@@ -114,6 +115,7 @@ import { TaskRoutes } from './worker/http/routes/TaskRoutes.js';
 import { PMRoutes } from './worker/http/routes/PMRoutes.js';
 import { CurrentStateRoutes } from './worker/http/routes/CurrentStateRoutes.js';
 import { ClaudeMdRoutes } from './worker/http/routes/ClaudeMdRoutes.js';
+import { PlansRoutes } from './worker/http/routes/PlansRoutes.js';
 import { LoopRoutes } from './worker/http/routes/LoopRoutes.js';
 import { TeamsRoutes } from './worker/http/routes/TeamsRoutes.js';
 import { TerminalRoutes } from './worker/http/routes/TerminalRoutes.js';
@@ -127,6 +129,9 @@ import { GraphRoutes } from './worker/http/routes/GraphRoutes.js';
 
 // Process management for zombie cleanup (Issue #737)
 import { startOrphanReaper, reapOrphanedProcesses } from './worker/ProcessRegistry.js';
+
+// Knowledge compaction (periodic dedup, decay, stale marking)
+import { KnowledgeCompactor } from './worker/KnowledgeCompactor.js';
 
 /**
  * Build JSON status output for hook framework communication.
@@ -170,6 +175,7 @@ export class WorkerService {
   private geminiAgent: GeminiAgent;
   private openRouterAgent: OpenRouterAgent;
   private groqAgent: GroqAgent;
+  private localAgent: LocalAgent;
   private paginationHelper: PaginationHelper;
   private settingsManager: SettingsManager;
   private sessionEventBroadcaster: SessionEventBroadcaster;
@@ -191,6 +197,10 @@ export class WorkerService {
   // Orphan reaper cleanup function (Issue #737)
   private stopOrphanReaper: (() => void) | null = null;
 
+  // Knowledge compactor for periodic maintenance
+  private knowledgeCompactor: KnowledgeCompactor | null = null;
+  private pmRoutes: PMRoutes | null = null;
+
   constructor() {
     // Initialize the promise that will resolve when background initialization completes
     this.initializationComplete = new Promise((resolve) => {
@@ -205,6 +215,7 @@ export class WorkerService {
     this.geminiAgent = new GeminiAgent(this.dbManager, this.sessionManager);
     this.openRouterAgent = new OpenRouterAgent(this.dbManager, this.sessionManager);
     this.groqAgent = new GroqAgent(this.dbManager, this.sessionManager);
+    this.localAgent = new LocalAgent(this.dbManager, this.sessionManager);
 
     this.paginationHelper = new PaginationHelper(this.dbManager);
     this.settingsManager = new SettingsManager(this.dbManager);
@@ -301,15 +312,17 @@ export class WorkerService {
 
     // Standard routes (registered AFTER guard middleware)
     this.server.registerRoutes(new ViewerRoutes(this.sseBroadcaster, this.dbManager, this.sessionManager));
-    this.server.registerRoutes(new SessionRoutes(this.sessionManager, this.dbManager, this.sdkAgent, this.geminiAgent, this.openRouterAgent, this.groqAgent, this.sessionEventBroadcaster, this));
+    this.server.registerRoutes(new SessionRoutes(this.sessionManager, this.dbManager, this.sdkAgent, this.geminiAgent, this.openRouterAgent, this.groqAgent, this.localAgent, this.sessionEventBroadcaster, this));
     this.server.registerRoutes(new DataRoutes(this.paginationHelper, this.dbManager, this.sessionManager, this.sseBroadcaster, this, this.startTime));
     this.server.registerRoutes(new SettingsRoutes(this.settingsManager));
     this.server.registerRoutes(new LogsRoutes());
     this.server.registerRoutes(new MemoryRoutes(this.dbManager, 'ultrabrain'));
     this.server.registerRoutes(new TaskRoutes(this.dbManager));
-    this.server.registerRoutes(new PMRoutes(this.dbManager));
+    this.pmRoutes = new PMRoutes(this.dbManager);
+    this.server.registerRoutes(this.pmRoutes);
     this.server.registerRoutes(new CurrentStateRoutes(this.dbManager));
     this.server.registerRoutes(new ClaudeMdRoutes(this.dbManager));
+    this.server.registerRoutes(new PlansRoutes());
     this.server.registerRoutes(new LoopRoutes(this.dbManager));
     this.server.registerRoutes(new TeamsRoutes());
     this.server.registerRoutes(new TerminalRoutes(this.terminalManager));
@@ -435,6 +448,18 @@ export class WorkerService {
       });
       logger.info('SYSTEM', 'Started orphan reaper (runs every 5 minutes)');
 
+      // Start knowledge compactor for periodic maintenance (dedup, decay, stale marking)
+      this.knowledgeCompactor = new KnowledgeCompactor(
+        () => this.dbManager.getSessionStore().db,
+        6 * 60 * 60 * 1000  // every 6 hours
+      );
+      this.knowledgeCompactor.start();
+
+      // Wire compactor to PM routes for manual trigger
+      if (this.pmRoutes) {
+        this.pmRoutes.setCompactor(this.knowledgeCompactor);
+      }
+
       // Auto-recover orphaned queues (fire-and-forget with error logging)
       this.processPendingQueues(50).then(result => {
         if (result.sessionsStarted > 0) {
@@ -457,7 +482,10 @@ export class WorkerService {
    * Get the appropriate agent based on provider settings.
    * Same logic as SessionRoutes.getActiveAgent() for consistency.
    */
-  private getActiveAgent(): SDKAgent | GeminiAgent | OpenRouterAgent | GroqAgent {
+  private getActiveAgent(): SDKAgent | GeminiAgent | OpenRouterAgent | GroqAgent | LocalAgent {
+    if (isLocalSelected()) {
+      return this.localAgent;
+    }
     if (isGroqSelected() && isGroqAvailable()) {
       return this.groqAgent;
     }
@@ -769,6 +797,12 @@ export class WorkerService {
     if (this.stopOrphanReaper) {
       this.stopOrphanReaper();
       this.stopOrphanReaper = null;
+    }
+
+    // Stop knowledge compactor before shutdown
+    if (this.knowledgeCompactor) {
+      this.knowledgeCompactor.stop();
+      this.knowledgeCompactor = null;
     }
 
     // Stop automation scheduler before shutdown

@@ -39,6 +39,11 @@ const DEFAULT_MAX_CONTEXT_MESSAGES = 20;  // Maximum messages to keep in convers
 const DEFAULT_MAX_ESTIMATED_TOKENS = 100000;  // ~100k tokens max context (safety limit)
 const CHARS_PER_TOKEN_ESTIMATE = 4;  // Conservative estimate: 1 token = 4 chars
 
+// Rate limiting constants
+const RATE_LIMIT_MAX_RETRIES = 3;
+const RATE_LIMIT_BACKOFF_MS = [5000, 15000, 30000]; // Exponential backoff delays
+const MIN_REQUEST_INTERVAL_MS = 2000; // Minimum 2s between requests (throttle)
+
 // OpenAI-compatible message format
 interface OpenAIMessage {
   role: 'user' | 'assistant' | 'system';
@@ -68,6 +73,7 @@ export class GroqAgent {
   private dbManager: DatabaseManager;
   private sessionManager: SessionManager;
   private fallbackAgent: FallbackAgent | null = null;
+  private lastRequestTime: number = 0; // Throttle: track last request timestamp
 
   constructor(dbManager: DatabaseManager, sessionManager: SessionManager) {
     this.dbManager = dbManager;
@@ -347,8 +353,22 @@ export class GroqAgent {
   }
 
   /**
+   * Throttle: ensure minimum interval between requests
+   */
+  private async throttle(): Promise<void> {
+    const now = Date.now();
+    const elapsed = now - this.lastRequestTime;
+    if (elapsed < MIN_REQUEST_INTERVAL_MS) {
+      const waitMs = MIN_REQUEST_INTERVAL_MS - elapsed;
+      logger.debug('SDK', `Groq throttle: waiting ${waitMs}ms`);
+      await new Promise(resolve => setTimeout(resolve, waitMs));
+    }
+    this.lastRequestTime = Date.now();
+  }
+
+  /**
    * Query Groq via REST API with full conversation history (multi-turn)
-   * Sends the entire conversation context for coherent responses
+   * Includes rate limiting with exponential backoff on 429/413 errors
    */
   private async queryGroqMultiTurn(
     history: ConversationMessage[],
@@ -367,63 +387,95 @@ export class GroqAgent {
       estimatedTokens
     });
 
-    const response = await fetch(GROQ_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        temperature: 0.3,  // Lower temperature for structured extraction
-        max_tokens: 4096,
-      }),
-    });
+    // Retry loop with exponential backoff for rate limits
+    for (let attempt = 0; attempt <= RATE_LIMIT_MAX_RETRIES; attempt++) {
+      // Throttle between requests
+      await this.throttle();
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Groq API error: ${response.status} - ${errorText}`);
-    }
-
-    const data = await response.json() as GroqResponse;
-
-    // Check for API error in response body
-    if (data.error) {
-      throw new Error(`Groq API error: ${data.error.code} - ${data.error.message}`);
-    }
-
-    if (!data.choices?.[0]?.message?.content) {
-      logger.error('SDK', 'Empty response from Groq');
-      return { content: '' };
-    }
-
-    const content = data.choices[0].message.content;
-    const tokensUsed = data.usage?.total_tokens;
-
-    // Log actual token usage (Groq free tier - no cost)
-    if (tokensUsed) {
-      const inputTokens = data.usage?.prompt_tokens || 0;
-      const outputTokens = data.usage?.completion_tokens || 0;
-
-      logger.info('SDK', 'Groq API usage', {
-        model,
-        inputTokens,
-        outputTokens,
-        totalTokens: tokensUsed,
-        cost: 'free',
-        messagesInContext: truncatedHistory.length
+      const response = await fetch(GROQ_API_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature: 0.3,
+          max_tokens: 4096,
+        }),
       });
 
-      // Warn if token usage is very high (context growing)
-      if (tokensUsed > 50000) {
-        logger.warn('SDK', 'High token usage detected - consider reducing context', {
-          totalTokens: tokensUsed
+      // Handle rate limit errors (429 Too Many Requests, 413 Request Too Large for TPM)
+      if (response.status === 429 || response.status === 413) {
+        if (attempt >= RATE_LIMIT_MAX_RETRIES) {
+          const errorText = await response.text();
+          throw new Error(`Groq API rate limit exceeded after ${RATE_LIMIT_MAX_RETRIES} retries: ${response.status} - ${errorText}`);
+        }
+
+        // Parse Retry-After header or use exponential backoff
+        const retryAfterHeader = response.headers.get('retry-after');
+        let waitMs = RATE_LIMIT_BACKOFF_MS[attempt] || 30000;
+
+        if (retryAfterHeader) {
+          const retryAfterSec = parseFloat(retryAfterHeader);
+          if (!isNaN(retryAfterSec)) {
+            waitMs = Math.ceil(retryAfterSec * 1000) + 1000; // Add 1s buffer
+          }
+        }
+
+        logger.warn('SDK', `Groq rate limit (${response.status}), retry ${attempt + 1}/${RATE_LIMIT_MAX_RETRIES} in ${(waitMs / 1000).toFixed(1)}s`, {
+          model, attempt: attempt + 1, waitMs
         });
+
+        await new Promise(resolve => setTimeout(resolve, waitMs));
+        continue;
       }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Groq API error: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json() as GroqResponse;
+
+      if (data.error) {
+        throw new Error(`Groq API error: ${data.error.code} - ${data.error.message}`);
+      }
+
+      if (!data.choices?.[0]?.message?.content) {
+        logger.error('SDK', 'Empty response from Groq');
+        return { content: '' };
+      }
+
+      const content = data.choices[0].message.content;
+      const tokensUsed = data.usage?.total_tokens;
+
+      if (tokensUsed) {
+        const inputTokens = data.usage?.prompt_tokens || 0;
+        const outputTokens = data.usage?.completion_tokens || 0;
+
+        logger.info('SDK', 'Groq API usage', {
+          model,
+          inputTokens,
+          outputTokens,
+          totalTokens: tokensUsed,
+          cost: 'free',
+          messagesInContext: truncatedHistory.length
+        });
+
+        if (tokensUsed > 50000) {
+          logger.warn('SDK', 'High token usage detected - consider reducing context', {
+            totalTokens: tokensUsed
+          });
+        }
+      }
+
+      return { content, tokensUsed };
     }
 
-    return { content, tokensUsed };
+    // Should not reach here, but safety fallback
+    throw new Error('Groq API: exhausted all retry attempts');
   }
 
   /**

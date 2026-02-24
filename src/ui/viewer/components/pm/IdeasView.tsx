@@ -14,6 +14,8 @@ interface IdeaItem {
   narrative: string | null;
   project: string;
   created_at_epoch: number;
+  status?: string;
+  relevance_score?: number;
   tags: string[];
 }
 
@@ -30,16 +32,20 @@ export function IdeasView({ currentProject }: IdeasViewProps) {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
+  const [showResolved, setShowResolved] = useState(false);
 
   useEffect(() => {
     setLoading(true);
-    const params = currentProject ? `?project=${encodeURIComponent(currentProject)}` : '';
-    fetch(`/api/pm/ideas${params}`)
+    const params = new URLSearchParams();
+    if (currentProject) params.set('project', currentProject);
+    if (showResolved) params.set('status', 'all');
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    fetch(`/api/pm/ideas${qs}`)
       .then(r => r.json())
       .then(data => setIdeas(data.ideas || []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [currentProject]);
+  }, [currentProject, showResolved]);
 
   const filtered = search
     ? ideas.filter(i =>
@@ -54,10 +60,16 @@ export function IdeasView({ currentProject }: IdeasViewProps) {
 
   return (
     <div style={{ padding: '1.5rem', maxWidth: '900px' }}>
-      <h2 style={{ margin: '0 0 1rem', fontSize: '1.2rem', fontWeight: 600 }}>
-        Ideas
-        <span style={{ fontSize: '0.85rem', opacity: 0.5, marginLeft: '8px' }}>({filtered.length})</span>
-      </h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1rem' }}>
+        <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
+          Ideas
+          <span style={{ fontSize: '0.85rem', opacity: 0.5, marginLeft: '8px' }}>({filtered.length})</span>
+        </h2>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', opacity: 0.6, cursor: 'pointer', marginLeft: 'auto' }}>
+          <input type="checkbox" checked={showResolved} onChange={e => setShowResolved(e.target.checked)} />
+          Show resolved
+        </label>
+      </div>
 
       <SearchFilter value={search} onChange={setSearch} placeholder="Search ideas..." />
 
@@ -67,7 +79,9 @@ export function IdeasView({ currentProject }: IdeasViewProps) {
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
-          {filtered.map(idea => (
+          {filtered.map(idea => {
+            const isResolved = idea.status === 'resolved' || idea.status === 'archived' || idea.status === 'stale';
+            return (
             <div
               key={idea.id}
               onClick={() => setExpandedId(expandedId === idea.id ? null : idea.id)}
@@ -78,15 +92,26 @@ export function IdeasView({ currentProject }: IdeasViewProps) {
                 background: '#8b5cf608',
                 cursor: 'pointer',
                 transition: 'border-color 0.2s',
+                opacity: isResolved ? 0.45 : 1,
               }}
               onMouseOver={e => (e.currentTarget.style.borderColor = '#8b5cf660')}
               onMouseOut={e => (e.currentTarget.style.borderColor = '#8b5cf630')}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
                 <span style={{ opacity: 0.4, fontSize: '0.7rem' }}>#{idea.id}</span>
-                <span style={{ opacity: 0.4, fontSize: '0.7rem' }}>{formatDate(idea.created_at_epoch)}</span>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  {isResolved && (
+                    <span style={{ fontSize: '0.65rem', padding: '1px 6px', borderRadius: '4px', background: '#374151', color: '#9ca3af' }}>
+                      {idea.status}
+                    </span>
+                  )}
+                  <span style={{ opacity: 0.4, fontSize: '0.7rem' }}>{formatDate(idea.created_at_epoch)}</span>
+                </div>
               </div>
-              <div style={{ fontSize: '0.85rem', fontWeight: 500, marginBottom: '6px' }}>
+              <div style={{
+                fontSize: '0.85rem', fontWeight: 500, marginBottom: '6px',
+                textDecoration: isResolved ? 'line-through' : 'none',
+              }}>
                 {idea.title || idea.subtitle || '(untitled)'}
               </div>
               <div style={{ display: 'flex', gap: '4px', marginBottom: expandedId === idea.id ? '8px' : 0 }}>
@@ -108,7 +133,8 @@ export function IdeasView({ currentProject }: IdeasViewProps) {
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

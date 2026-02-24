@@ -166,13 +166,20 @@ export function TerminalPanel() {
   }, [on]);
 
   const createTerminal = useCallback(() => {
+    if (connectionState !== 'connected') {
+      // Reconnect and retry after a short delay
+      connect();
+      setTimeout(() => {
+        send({ type: 'create', shell: selectedShell });
+      }, 500);
+      return;
+    }
     terminalCounter++;
-    const tempId = `temp-${terminalCounter}`;
     send({
       type: 'create',
       shell: selectedShell,
     });
-  }, [send, selectedShell]);
+  }, [send, selectedShell, connectionState, connect]);
 
   const handleCloseTerminal = useCallback((id: string) => {
     send({ type: 'destroy', terminalId: id });

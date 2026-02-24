@@ -417,15 +417,22 @@ export function ContextSettingsModal({
                 tooltip="Choose between Claude (via Agent SDK) or Gemini (via REST API)"
               >
                 <select
-                  value={formState.ULTRABRAIN_PROVIDER || 'claude'}
+                  value={formState.ULTRABRAIN_PROVIDER || 'local'}
                   onChange={(e) => updateSetting('ULTRABRAIN_PROVIDER', e.target.value)}
                 >
+                  <option value="local">Local (zero tokens, recommended)</option>
+                  <option value="groq">Groq (free tier, Llama 4 Scout)</option>
                   <option value="claude">Claude (uses your Claude account)</option>
                   <option value="gemini">Gemini (uses API key)</option>
                   <option value="openrouter">OpenRouter (multi-model)</option>
-                  <option value="groq">Groq (free tier, Llama 4 Scout)</option>
                 </select>
               </FormField>
+
+              {formState.ULTRABRAIN_PROVIDER === 'local' && (
+                <div style={{ padding: '8px 12px', background: 'rgba(76, 175, 80, 0.1)', borderRadius: '6px', fontSize: '12px', color: 'var(--text-secondary, #aaa)', lineHeight: '1.5' }}>
+                  Observations extracted locally from tool data (zero API tokens). Only session summaries use LLM (via Groq/OpenRouter if configured). No API key required for observations.
+                </div>
+              )}
 
               {formState.ULTRABRAIN_PROVIDER === 'claude' && (
                 <>

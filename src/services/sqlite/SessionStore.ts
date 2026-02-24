@@ -56,6 +56,7 @@ export class SessionStore {
     this.createTerminalSessionsTable();
     this.createAutomationTables();
     this.createTerminalRecordingsTable();
+    this.addObservationLifecycleColumns();
   }
 
   /**
@@ -2735,5 +2736,36 @@ export class SessionStore {
 
     this.db.prepare('INSERT OR IGNORE INTO schema_versions (version, applied_at) VALUES (?, ?)').run(27, new Date().toISOString());
     logger.info('DB', 'Created terminal_recordings table');
+  }
+
+  /**
+   * Add lifecycle columns to observations table (migration 28)
+   */
+  private addObservationLifecycleColumns(): void {
+    const applied = this.db.prepare('SELECT version FROM schema_versions WHERE version = ?').get(28) as SchemaVersion | undefined;
+    if (applied) return;
+
+    const info = this.db.query('PRAGMA table_info(observations)').all() as TableColumnInfo[];
+    const columns = info.map((col: any) => col.name);
+
+    if (!columns.includes('status')) {
+      this.db.run("ALTER TABLE observations ADD COLUMN status TEXT NOT NULL DEFAULT 'active'");
+    }
+    if (!columns.includes('relevance_score')) {
+      this.db.run('ALTER TABLE observations ADD COLUMN relevance_score REAL NOT NULL DEFAULT 1.0');
+    }
+    if (!columns.includes('linked_observation_id')) {
+      this.db.run('ALTER TABLE observations ADD COLUMN linked_observation_id INTEGER REFERENCES observations(id)');
+    }
+    if (!columns.includes('resolved_at_epoch')) {
+      this.db.run('ALTER TABLE observations ADD COLUMN resolved_at_epoch INTEGER');
+    }
+
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_observations_status ON observations(status)');
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_observations_relevance ON observations(relevance_score)');
+    this.db.run('CREATE INDEX IF NOT EXISTS idx_observations_linked ON observations(linked_observation_id)');
+
+    this.db.prepare('INSERT OR IGNORE INTO schema_versions (version, applied_at) VALUES (?, ?)').run(28, new Date().toISOString());
+    logger.info('DB', 'Added observation lifecycle columns');
   }
 }

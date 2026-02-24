@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
-import { ClaudeMemDatabase } from '../../src/services/sqlite/Database.js';
+import { UltraBrainDatabase } from '../../src/services/sqlite/Database.js';
 import {
   createSDKSession,
   getSessionById,
@@ -21,7 +21,7 @@ describe('Sessions Module', () => {
   let db: Database;
 
   beforeEach(() => {
-    db = new ClaudeMemDatabase(':memory:').db;
+    db = new UltraBrainDatabase(':memory:').db;
   });
 
   afterEach(() => {

@@ -15,7 +15,7 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach, mock } from 'bun:test';
-import { ClaudeMemDatabase } from '../src/services/sqlite/Database.js';
+import { UltraBrainDatabase } from '../src/services/sqlite/Database.js';
 import { PendingMessageStore } from '../src/services/sqlite/PendingMessageStore.js';
 import { createSDKSession } from '../src/services/sqlite/Sessions.js';
 import type { ActiveSession, PendingMessage } from '../src/services/worker-types.js';
@@ -26,7 +26,7 @@ describe('Zombie Agent Prevention', () => {
   let pendingStore: PendingMessageStore;
 
   beforeEach(() => {
-    db = new ClaudeMemDatabase(':memory:').db;
+    db = new UltraBrainDatabase(':memory:').db;
     pendingStore = new PendingMessageStore(db, 3);
   });
 

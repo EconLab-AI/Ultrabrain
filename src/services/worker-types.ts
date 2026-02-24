@@ -32,7 +32,7 @@ export interface ActiveSession {
   cumulativeOutputTokens: number;  // Track output tokens for discovery cost
   earliestPendingTimestamp: number | null;  // Original timestamp of earliest pending message (for accurate observation timestamps)
   conversationHistory: ConversationMessage[];  // Shared conversation history for provider switching
-  currentProvider: 'claude' | 'gemini' | 'openrouter' | null;  // Track which provider is currently running
+  currentProvider: 'claude' | 'gemini' | 'openrouter' | 'groq' | 'local' | null;  // Track which provider is currently running
   consecutiveRestarts: number;  // Track consecutive restart attempts to prevent infinite loops
   forceInit?: boolean;  // Force fresh SDK session (skip resume)
   // CLAIM-CONFIRM FIX: Track IDs of messages currently being processed
